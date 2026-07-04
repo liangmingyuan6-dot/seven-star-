@@ -22,7 +22,7 @@
         <span class="mini-planet p-uranus"></span>
         <span class="mini-planet p-neptune"></span>
       </div>
-      <p class="name-hint">⚠️ 温馨提示：名字请勿使用「作者」这两个字。如果使用「作者」二字，则会扣掉所有本游戏的资源，已收的钱不会奉还，谢谢配合。</p>
+      <p class="name-hint">⚠️ 温馨提示：名字内请勿输入「作者」这两个字。如果输入「作者」二字，会被扣掉所有游戏里的资源，谢谢配合。</p>
       <div class="name-input-wrapper">
         <span class="name-input-label">👨‍🚀</span>
         <input type="text" class="name-input" id="player-name-input" placeholder="请输入你的名字">
@@ -31,7 +31,14 @@
       <button class="btn btn-start" onclick="startGame()">🚀 开始冒险</button>
       <button class="btn btn-leaderboard" onclick="openLeaderboardFromStart()">🏆 排行榜</button>
       <button class="btn btn-rank" onclick="openRankScreen()">🏅 段位</button>
-      <button class="btn btn-friends" onclick="openFriendsScreen()">👥 好友</button>
+      <button class="btn btn-friends" id="friends-btn"
+        onmousedown="handleFriendsBtnDown(event)"
+        onmouseup="handleFriendsBtnUp(event)"
+        onmouseleave="handleFriendsBtnUp(event)"
+        ontouchstart="handleFriendsBtnDown(event)"
+        ontouchend="handleFriendsBtnUp(event)"
+        onclick="handleFriendsBtnClick(event)">👥 好友</button>
+      <button class="btn btn-feedback" onclick="openFeedbackScreen()">💬 建议反馈</button>
       <div class="key-hint-preview">
         <p>操作说明：</p>
         <div class="key-row">
@@ -67,7 +74,7 @@
     <h2 class="screen-title">🌌 选择行星</h2>
     <div id="planet-grid" class="planet-grid"></div>
     <div class="planet-actions">
-      <button class="btn btn-shop" onclick="openShop()">🏪 武器库</button>
+      <button class="btn btn-shop" onclick="openShop()">🏪 商店</button>
       <button class="btn btn-trial" onclick="openTrialTower()">🏯 试炼塔</button>
       <button class="btn btn-pk" onclick="openPKArena()">⚔️ PK竞技场</button>
 
@@ -147,6 +154,24 @@
     </div>
   </div>
 
+  <!-- 建议反馈界面 -->
+  <div id="feedback-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="feedback-content">
+      <h2 class="feedback-title">💬 建议反馈</h2>
+      <p class="feedback-subtitle">有任何想法、Bug 或建议？欢迎告诉我们！</p>
+      <textarea id="feedback-input" class="feedback-input" placeholder="请输入你的意见或建议…" maxlength="500"></textarea>
+      <div class="feedback-actions">
+        <button class="btn btn-start" onclick="submitFeedback()">📤 提交建议</button>
+        <button class="btn btn-back" onclick="closeFeedbackScreen()">🔙 返回</button>
+      </div>
+      <div class="feedback-list-wrapper">
+        <h3 class="feedback-list-title">📝 已提交的建议</h3>
+        <div id="feedback-list" class="feedback-list"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- 段位详情界面 -->
   <div id="rank-screen" class="screen">
     <div class="stars-bg"></div>
@@ -173,15 +198,29 @@
     </div>
   </div>
 
-  <!-- 武器库界面 -->
+  <!-- 商店界面 -->
   <div id="shop-screen" class="screen">
     <div class="stars-bg"></div>
     <div class="shop-content">
-      <h2 class="shop-title">🏪 武器库</h2>
+      <h2 class="shop-title">🏪 商店</h2>
       <div class="shop-currency">
         <span>⭐ 金币：<b id="shop-gold">0</b></span>
         <span>💎 钻石：<b id="shop-diamond">0</b></span>
         <button class="btn-exchange" onclick="convertDiamondToGold()" title="1钻石→200金币">💱 兑换金币</button>
+      </div>
+      <div class="shop-consumables">
+        <div class="consumable-card" onclick="buyCola()">
+          <span class="consumable-icon">🥤</span>
+          <div class="consumable-name">可乐</div>
+          <div class="consumable-desc">最大生命值 +5</div>
+          <div class="consumable-price">⭐ 50</div>
+        </div>
+        <div class="consumable-card" onclick="buyHeart()">
+          <span class="consumable-icon">❤️</span>
+          <div class="consumable-name">爱心</div>
+          <div class="consumable-desc">最大生命值 +11</div>
+          <div class="consumable-price">⭐ 100</div>
+        </div>
       </div>
       <div class="shop-tabs">
         <button class="shop-tab active" id="tab-low" onclick="switchShopTab('low')">🟢 低级武器<br><small>250把 | 段位 1-5</small></button>
@@ -301,7 +340,7 @@
 
     <div class="battle-info" id="battle-info">
       <span id="battle-planet">🌍 水星</span>
-      <span>🎯 第 <span id="battle-stage">1</span>/100 关</span>
+      <span id="battle-stage">🎯 第 1/10 关</span>
     </div>
     <div class="battle-log" id="battle-log"></div>
   </div>

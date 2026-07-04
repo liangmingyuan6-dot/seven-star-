@@ -31,7 +31,7 @@ const PLANETS = [
     bulletColor: '#b0b0b0',
     bulletSpeed: 8,
     groundFeatures: ['craters', 'rocks'],
-    monsters: generateMonsters(1, 50, 14, 5)
+    monsters: generateMonsters(1, 50, 14, 5, 10)
   },
   {
     id: 2,
@@ -48,7 +48,7 @@ const PLANETS = [
     bulletColor: '#c9e84e',
     bulletSpeed: 7.5,
     groundFeatures: ['clouds', 'acid_pools'],
-    monsters: generateMonsters(2, 75, 20, 6)
+    monsters: generateMonsters(2, 75, 20, 6, 30)
   },
   {
     id: 3,
@@ -65,7 +65,7 @@ const PLANETS = [
     bulletColor: '#ff6633',
     bulletSpeed: 8.5,
     groundFeatures: ['volcano', 'lava_cracks'],
-    monsters: generateMonsters(3, 100, 26, 9)
+    monsters: generateMonsters(3, 100, 26, 9, 60)
   },
   {
     id: 4,
@@ -82,7 +82,7 @@ const PLANETS = [
     bulletColor: '#ffd700',
     bulletSpeed: 7,
     groundFeatures: ['swirl', 'storm_bands'],
-    monsters: generateMonsters(4, 130, 32, 13)
+    monsters: generateMonsters(4, 130, 32, 13, 100)
   },
   {
     id: 5,
@@ -99,7 +99,7 @@ const PLANETS = [
     bulletColor: '#f4d58d',
     bulletSpeed: 9,
     groundFeatures: ['rings', 'ice_chunks'],
-    monsters: generateMonsters(5, 160, 40, 16)
+    monsters: generateMonsters(5, 160, 40, 16, 140)
   },
   {
     id: 6,
@@ -116,7 +116,7 @@ const PLANETS = [
     bulletColor: '#7ec8e3',
     bulletSpeed: 7.5,
     groundFeatures: ['ice_crystals', 'methane_snow'],
-    monsters: generateMonsters(6, 200, 48, 20)
+    monsters: generateMonsters(6, 200, 48, 20, 200)
   },
   {
     id: 7,
@@ -133,7 +133,7 @@ const PLANETS = [
     bulletColor: '#4169e1',
     bulletSpeed: 8.5,
     groundFeatures: ['storm_vortex', 'dark_energy'],
-    monsters: generateMonsters(7, 260, 60, 25)
+    monsters: generateMonsters(7, 260, 60, 25, 300)
   }
 ];
 
@@ -159,15 +159,16 @@ function generateMonsterName(planetId, index) {
   return MONSTER_PREFIXES[prefixIdx] + MONSTER_SUFFIXES[suffixIdx];
 }
 
-function generateMonsters(planetId, baseHp, baseAtk, baseDef) {
+function generateMonsters(planetId, baseHp, baseAtk, baseDef, totalMonsters) {
+  totalMonsters = totalMonsters || 100;
   const monsters = [];
   const bossName = getBossNames(planetId);
   const bossGold = planetId * 9; // Boss金币按星球递增
 
-  for (let i = 1; i <= 100; i++) {
-    const isBoss = (i === 100);
-    // 普通怪难度渐进：从0.7倍到3.5倍（陡峭增长）
-    const multiplier = isBoss ? 5.5 : (0.7 + (i * 0.028));
+  for (let i = 1; i <= totalMonsters; i++) {
+    const isBoss = (i === totalMonsters);
+    // 普通怪难度渐进：从0.7倍到3.5倍（按总关数等比缩放）
+    const multiplier = isBoss ? 5.5 : (0.7 + (i / totalMonsters) * 2.8);
 
     monsters.push({
       name: isBoss ? bossName : generateMonsterName(planetId, i),
@@ -205,8 +206,8 @@ const TRIAL_TOWER = {
     icon: '🏯',
     color: '#7bed9f',
     totalMonsters: 10,
-    baseHp: 30, baseAtk: 8, baseDef: 3,
-    bossGold: 15,
+    baseHp: 55, baseAtk: 15, baseDef: 5,
+    bossGold: 25,
     planetConfig: {
       id: 99, name: '低级试炼塔', enName: 'Trial Tower - Low', icon: '🏯',
       color: '#7bed9f', bgColor: '#1a2a1a', skyTop: '#0a1a0a', skyBottom: '#2a3a2a',
@@ -221,8 +222,8 @@ const TRIAL_TOWER = {
     icon: '🏯',
     color: '#ffa502',
     totalMonsters: 30,
-    baseHp: 100, baseAtk: 26, baseDef: 9,
-    bossGold: 40,
+    baseHp: 180, baseAtk: 48, baseDef: 15,
+    bossGold: 60,
     planetConfig: {
       id: 98, name: '中级试炼塔', enName: 'Trial Tower - Mid', icon: '🏯',
       color: '#ffa502', bgColor: '#2a1a0a', skyTop: '#1a0a05', skyBottom: '#3a2010',
@@ -237,8 +238,8 @@ const TRIAL_TOWER = {
     icon: '🏯',
     color: '#ff4757',
     totalMonsters: 60,
-    baseHp: 100, baseAtk: 25, baseDef: 10,
-    bossGold: 80,
+    baseHp: 220, baseAtk: 60, baseDef: 22,
+    bossGold: 100,
     planetConfig: {
       id: 97, name: '高级试炼塔', enName: 'Trial Tower - High', icon: '🏯',
       color: '#ff4757', bgColor: '#2a0a0a', skyTop: '#1a0505', skyBottom: '#3a1010',
@@ -255,7 +256,7 @@ function generateTrialMonsters(tier) {
   const bossName = `${cfg.name}守护者`;
   for (let i = 1; i <= cfg.totalMonsters; i++) {
     const isBoss = (i === cfg.totalMonsters);
-    const multiplier = isBoss ? 4.0 : (0.5 + (i / cfg.totalMonsters) * 1.5);
+    const multiplier = isBoss ? 5.5 : (0.6 + (i / cfg.totalMonsters) * 1.9);
     monsters.push({
       name: isBoss ? bossName : generateMonsterName(100 + ['low','mid','high'].indexOf(tier) * 10, i),
       hp: Math.floor(cfg.baseHp * multiplier),
@@ -278,8 +279,8 @@ const PK_ARENA = {
     icon: '⚔️',
     color: '#7bed9f',
     totalLevels: 10,
-    baseHp: 40, baseAtk: 10, baseDef: 4,
-    winGold: 10,
+    baseHp: 70, baseAtk: 18, baseDef: 7,
+    winGold: 12,
     titles: [
       '见习武者', '初出茅庐', '新星战士', '铁血勇士', '荣耀斗士',
       '青铜剑客', '白银猎手', '黄金骑士', '钻石战神', '王者之刃'
@@ -298,8 +299,8 @@ const PK_ARENA = {
     icon: '🗡️',
     color: '#ff6348',
     totalLevels: 30,
-    baseHp: 70, baseAtk: 18, baseDef: 7,
-    winGold: 25,
+    baseHp: 140, baseAtk: 38, baseDef: 14,
+    winGold: 35,
     titles: [
       '青铜I·初窥门径','青铜II·锋芒初露','青铜III·小有成就','青铜IV·百战先锋','青铜V·钢躯铁骨',
       '青铜VI·剑指苍穹','青铜VII·无畏战士','青铜VIII·破风战将','青铜IX·浴血战魂','青铜王者·至尊',
@@ -322,7 +323,7 @@ function generatePKOpponents(tier) {
   const cfg = PK_ARENA[tier];
   const opponents = [];
   for (let i = 1; i <= cfg.totalLevels; i++) {
-    const multiplier = 0.6 + (i / cfg.totalLevels) * 1.2;
+    const multiplier = 0.7 + (i / cfg.totalLevels) * 1.6;
     const title = cfg.titles[i - 1];
     opponents.push({
       name: `${title}·${generateMonsterName(200 + ['novice','expert'].indexOf(tier) * 10, i)}`,
@@ -433,6 +434,7 @@ function initBattleCanvasForPK(planet, opponent, totalLevels) {
   gameState.bullets = [];
   gameState.enemyBullets = [];
   gameState.particles = [];
+  gameState.effects = [];
   gameState.shakeAmount = 0;
   gameState.paused = false;
   gameState._fireInterval = 0;
@@ -640,6 +642,7 @@ function initBattleCanvasForTrial(planet, monster, totalMonsters) {
   gameState.bullets = [];
   gameState.enemyBullets = [];
   gameState.particles = [];
+  gameState.effects = [];
   gameState.shakeAmount = 0;
   gameState.paused = false;
   gameState._fireInterval = 0;
@@ -831,7 +834,7 @@ function renderRankScreen() {
   }).join('');
 }
 
-// ==================== 武器库 - 999把武器×99级 ====================
+// ==================== 商店 - 999把武器×99级 ====================
 
 // 武器名称前缀池（按品质分级）
 const LOW_PFX = ['铁质','铜制','石锤','骨制','简易','木质','铁屑','石肤','铜皮','铁骨','轻型','铁制','铜芯','石弹','铁爪','铜管','铁刃','碎石','铁皮','铜环','石核','铁索','铜刺','岩甲','石拳','铁芯','铜壳','岩晶','铁磁','铜光','石吼','铁壁','铜焰','钢铸','铅芯','青铜','黑铁','赤铜','白银','黄金','镀铬','合金','碳钢','钨金','锰铁','镍铬','钛金','钴蓝','锌白'];
@@ -848,6 +851,224 @@ const LOW_ICON_POOL = ['🔫','🔧','🪓','🔱','🗡️','🏹','🛡️','�
 const MID_ICON_POOL = ['⚡','💥','🧬','🌀','🕳️','🔆','🧪','☢️','🌊','✨','⚛️','🔮','⭐','🌑','🫧','🌩️','💫','🕶️','🔭','🪢','🧲','⛓️‍💥','🚀','🌘','🌟','🚀','🧬','🫙','⏳','🔥','📐','☀️','🌌','💠','🎆','🌋','🌈','❇️','🔬','🛸','🎇','🪐','🌪️','🫧','💠','🌀','🎛️','📊','🧿'];
 const HI_ICON_POOL = ['👑','💀','❄️','⚔️','💢','🎭','⌛','🪐','♾️','👻','🌌','🌈','🛡️','✋','👁️','💣','🧠','☠️','🧊','🗿','🐉','🕯️','🚪','🪬','🔥','🪓','🎸','🏆','🐦‍🔥','☯️','🌋','⚖️','☯️','🗡','🦅','🦂','🐍','🕷️','👹','👺','😈','💫','⚜️','🧙','🦄','🐲','🌑','⚡','💎'];
 const ULT_ICON_POOL = ['🌟','✨','💫','⭐','🌠','🪐','🌌','🔮','💎','👑','🏆','🎖️','🌀','♾️','☀️','⚜️','🔱','💠','🕉️','☸️','✡️','☯️','⚛️','🪬','🧿','🕎','🔯','🎴','🀄','🃏','🌸','🏵️','💮','👁️‍🗨️','✨','💖','🌕','☄️','🪷','🕊️','🦚','🍀','🎐','🏮','📿','🪔','🌅','🎑','🪷'];
+
+// ==================== 音效系统 (Web Audio API) ====================
+
+let _audioCtx = null;
+let _audioEnabled = false;
+
+function initAudio() {
+  if (_audioCtx) return;
+  try {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    _audioEnabled = true;
+  } catch (e) {
+    _audioEnabled = false;
+  }
+}
+
+function resumeAudio() {
+  if (_audioCtx && _audioCtx.state === 'suspended') {
+    _audioCtx.resume();
+  }
+}
+
+// 播放击中音效 - 每次不同
+const HIT_SOUNDS = ['ping', 'clink', 'zap', 'thud', 'boom', 'spark'];
+let _hitSoundIdx = 0;
+
+function playHitSound() {
+  if (!_audioEnabled || !_audioCtx) { initAudio(); if (!_audioEnabled) return; }
+  resumeAudio();
+  const ctx = _audioCtx;
+  const type = HIT_SOUNDS[_hitSoundIdx % HIT_SOUNDS.length];
+  _hitSoundIdx++;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  switch (type) {
+    case 'ping':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.04);
+      osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      osc.start(now); osc.stop(now + 0.1);
+      break;
+    case 'clink':
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(2000, now + 0.02);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.07);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.start(now); osc.stop(now + 0.08);
+      break;
+    case 'zap':
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(1500, now + 0.03);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.07);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.start(now); osc.stop(now + 0.08);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2); gain2.connect(ctx.destination);
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(100, now);
+      osc2.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+      gain2.gain.setValueAtTime(0.06, now);
+      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+      osc2.start(now); osc2.stop(now + 0.06);
+      break;
+    case 'thud':
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+      osc.start(now); osc.stop(now + 0.12);
+      break;
+    case 'boom':
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+      osc.start(now); osc.stop(now + 0.18);
+      break;
+    case 'spark':
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.setValueAtTime(900, now + 0.015);
+      osc.frequency.setValueAtTime(1200, now + 0.03);
+      osc.frequency.setValueAtTime(700, now + 0.045);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+      osc.start(now); osc.stop(now + 0.06);
+      break;
+  }
+}
+
+// 播放击杀音效 - 每次不同
+const KILL_SOUNDS = ['explosion', 'shatter', 'rising', 'descend'];
+let _killSoundIdx = 0;
+
+function playKillSound() {
+  if (!_audioEnabled || !_audioCtx) { initAudio(); if (!_audioEnabled) return; }
+  resumeAudio();
+  const ctx = _audioCtx;
+  const type = KILL_SOUNDS[_killSoundIdx % KILL_SOUNDS.length];
+  _killSoundIdx++;
+
+  const now = ctx.currentTime;
+
+  switch (type) {
+    case 'explosion':
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100 + i * 60, now + i * 0.02);
+        osc.frequency.exponentialRampToValueAtTime(30 - i * 5, now + 0.3 + i * 0.02);
+        gain.gain.setValueAtTime(0.08, now + i * 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35 + i * 0.02);
+        osc.start(now + i * 0.02); osc.stop(now + 0.35 + i * 0.02);
+      }
+      break;
+    case 'shatter':
+      for (let i = 0; i < 5; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800 + i * 300, now);
+        osc.frequency.exponentialRampToValueAtTime(100 + i * 80, now + 0.15);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now); osc.stop(now + 0.15);
+      }
+      break;
+    case 'rising':
+      {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+        osc.frequency.exponentialRampToValueAtTime(1500, now + 0.35);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now); osc.stop(now + 0.4);
+      }
+      {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, now + 0.05);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+        osc.frequency.exponentialRampToValueAtTime(1000, now + 0.4);
+        gain.gain.setValueAtTime(0.08, now + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+        osc.start(now + 0.05); osc.stop(now + 0.45);
+      }
+      break;
+    case 'descend':
+      for (let i = 0; i < 4; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = i % 2 === 0 ? 'sawtooth' : 'triangle';
+        osc.frequency.setValueAtTime(500 - i * 80, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.25);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
+      }
+      break;
+  }
+}
+
+// 播放大招音效
+let _ultSoundIdx = 0;
+function playUltSound() {
+  if (!_audioEnabled || !_audioCtx) { initAudio(); if (!_audioEnabled) return; }
+  resumeAudio();
+  const ctx = _audioCtx;
+  const now = ctx.currentTime;
+
+  for (let i = 0; i < 5; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(200 + i * 100, now + i * 0.03);
+    osc.frequency.exponentialRampToValueAtTime(800 + i * 200, now + i * 0.03 + 0.15);
+    gain.gain.setValueAtTime(0.06, now + i * 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc.start(now + i * 0.03); osc.stop(now + 0.5);
+  }
+  const bass = ctx.createOscillator();
+  const bassGain = ctx.createGain();
+  bass.connect(bassGain); bassGain.connect(ctx.destination);
+  bass.type = 'sawtooth';
+  bass.frequency.setValueAtTime(80, now);
+  bass.frequency.exponentialRampToValueAtTime(30, now + 0.6);
+  bassGain.gain.setValueAtTime(0.1, now);
+  bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+  bass.start(now); bass.stop(now + 0.6);
+}
 
 // 生成武器名称
 function getWeaponName(tier, index) {
@@ -1075,7 +1296,7 @@ function applyWeaponStats() {
   const prevMaxHp = p.maxHp;
   p.atk = 20 + Math.floor(b.atk);
   p.def = 8 + Math.floor(b.def);
-  p.maxHp = 150 + Math.floor(b.maxHp);
+  p.maxHp = 150 + Math.floor(b.maxHp) + (p.consumableBonusHp || 0);
   // HP增加：只增加差值部分
   const hpDiff = p.maxHp - prevMaxHp;
   if (hpDiff > 0) p.hp += hpDiff;
@@ -1094,6 +1315,7 @@ const gameState = {
     gold: 0,
     diamond: 0,
     totalKills: 0,
+    consumableBonusHp: 0, // 商店消耗品额外血量
     // 位置 (Canvas坐标)
     x: 0,
     y: 0,
@@ -1143,6 +1365,9 @@ const gameState = {
   keys: {},
   // 粒子效果
   particles: [],
+  effects: [],       // 战斗特效（光环、冲击波等）
+  _hitEffectIdx: 0,  // 命中特效轮换
+  _killEffectIdx: 0, // 击杀特效轮换
   // 子弹 (player -> enemy)
   bullets: [],
   // 敌人子弹 (enemy -> player)
@@ -1152,6 +1377,44 @@ const gameState = {
   // 暂停状态
   paused: false
 };
+
+// ==================== 作者名字检测与惩罚 ====================
+
+function checkAuthorPenalty() {
+  const input = document.getElementById('player-name-input');
+  const name = (input && input.value.trim()) ? input.value.trim() : '宇航员';
+  if (!name.includes('作者')) return false;
+
+  // 清空 gameState 中所有资源
+  const p = gameState.player;
+  p.gold = 0;
+  p.diamond = 0;
+  p.totalKills = 0;
+  p.ownedWeapons = {};
+  p.activeWeaponId = null;
+  p.consumableBonusHp = 0;
+  gameState.completedPlanets = [];
+  gameState.finalBossDefeated = false;
+  gameState._pkProgress = { novice: 0, expert: 0 };
+  gameState._lastRankId = 1;
+  gameState._lastRankName = RANKS[0].name;
+  gameState._lastRankIcon = RANKS[0].icon;
+
+  // 清除本地存档
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch (e) {}
+
+  // 强行覆盖保存一个空档
+  saveGame();
+
+  // 显示提示
+  setTimeout(() => {
+    alert('⚠️ 检测到名字中包含「作者」二字，所有游戏资源已被清空！');
+  }, 100);
+
+  return true;
+}
 
 // ==================== 屏幕切换 ====================
 
@@ -1163,6 +1426,13 @@ function showScreen(screenId) {
 // ==================== 游戏流程 ====================
 
 function startGame() {
+  // 初始化音效系统（需要用户交互后才允许播放）
+  initAudio();
+  resumeAudio();
+
+  // 检查名字是否包含「作者」
+  checkAuthorPenalty();
+
   // 首次开始游戏：永久锁定名字
   lockNameOnFirstRun();
 
@@ -1183,6 +1453,7 @@ function startGame() {
   gameState.inBattle = false;
   gameState.currentEnemy = null;
   gameState.particles = [];
+  gameState.effects = [];
   gameState.bullets = [];
   gameState.enemyBullets = [];
   gameState.shakeAmount = 0;
@@ -1219,11 +1490,45 @@ function resetGame() {
   showScreen('start-screen');
 }
 
-// ==================== 武器库系统 ====================
+// ==================== 商店系统 ====================
 
-let shopTab = 'low'; // 当前武器库标签
+let shopTab = 'low'; // 当前商店标签
 let shopPage = 1;     // 当前分页
 const SHOP_PAGE_SIZE = 20; // 每页显示武器数
+
+// ==================== 商店消耗品 ====================
+
+function buyCola() {
+  const p = gameState.player;
+  if (p.gold < 50) {
+    alert('💸 金币不足！可乐需要50金币。');
+    return;
+  }
+  p.gold -= 50;
+  p.consumableBonusHp = (p.consumableBonusHp || 0) + 5;
+  p.maxHp += 5;
+  p.hp += 5;
+  updateShopCurrency();
+  saveGame();
+  updateHeaderUI();
+  alert('🥤 购买成功！最大生命值 +5！');
+}
+
+function buyHeart() {
+  const p = gameState.player;
+  if (p.gold < 100) {
+    alert('💸 金币不足！爱心需要100金币。');
+    return;
+  }
+  p.gold -= 100;
+  p.consumableBonusHp = (p.consumableBonusHp || 0) + 11;
+  p.maxHp += 11;
+  p.hp += 11;
+  updateShopCurrency();
+  saveGame();
+  updateHeaderUI();
+  alert('❤️ 购买成功！最大生命值 +11！');
+}
 
 function openShop() {
   shopTab = 'low';
@@ -3298,8 +3603,8 @@ function renderPlanets() {
     if (isCurrent) card.classList.add('current');
     if (isLocked) card.classList.add('locked');
 
-    const completedCount = isCompleted ? 100 : (isCurrent ? gameState.currentMonsterIndex : 0);
-    const progressPercent = (completedCount / 100) * 100;
+    const completedCount = isCompleted ? planet.monsters.length : (isCurrent ? gameState.currentMonsterIndex : 0);
+    const progressPercent = (completedCount / planet.monsters.length) * 100;
 
     card.innerHTML = `
       ${isCompleted ? '<span class="completed-badge">✅</span>' : ''}
@@ -3307,7 +3612,7 @@ function renderPlanets() {
       <div class="planet-card-name" style="color:${planet.color}">${planet.name}</div>
       <div class="planet-card-en">${planet.enName}</div>
       <div class="planet-card-progress">
-        ${isCompleted ? '已通关' : (isLocked ? '🔒 未解锁' : `${completedCount}/100`)}
+        ${isCompleted ? '已通关' : (isLocked ? '🔒 未解锁' : `${completedCount}/${planet.monsters.length}`)}
       </div>
       <div class="planet-card-bar">
         <div class="planet-card-bar-fill" style="width:${progressPercent}%; background:${planet.color}"></div>
@@ -3418,13 +3723,13 @@ function initBattleCanvas(planet, monster) {
   updateHeaderUI();
   document.getElementById('battle-log').innerHTML = '';
   document.getElementById('battle-planet').textContent = `${planet.icon} ${planet.name}`;
-  document.getElementById('battle-stage').textContent = gameState.currentMonsterIndex + 1;
+  document.getElementById('battle-stage').textContent = `🎯 第 ${gameState.currentMonsterIndex + 1}/${planet.monsters.length} 关`;
   document.getElementById('battle-ult').textContent = '就绪';
   document.getElementById('battle-ult').style.color = '#2ecc71';
 
   updateSkillCDs();
 
-  addBattleLog(`🚀 登陆 ${planet.name} - 第 ${gameState.currentMonsterIndex + 1}/100 关`, 'system');
+  addBattleLog(`🚀 登陆 ${planet.name} - 第 ${gameState.currentMonsterIndex + 1}/${planet.monsters.length} 关`, 'system');
   if (monster.isBoss) {
     addBattleLog(`⚠️ Boss「${monster.name}」出现了！`, 'system');
   } else {
@@ -3458,7 +3763,7 @@ function renderBattleWeapons() {
   const ownedIds = Object.keys(ow).map(Number).filter(id => ow[id] > 0).sort((a, b) => b - a);
 
   if (ownedIds.length === 0) {
-    container.innerHTML = '<span class="bw-empty">暂无武器，去武器库购买吧</span>';
+    container.innerHTML = '<span class="bw-empty">暂无武器，去商店购买吧</span>';
     return;
   }
 
@@ -3705,6 +4010,9 @@ function update() {
     return part.life > 0;
   });
 
+  // 更新特效
+  updateEffects();
+
   // 更新子弹
   gameState.bullets = gameState.bullets.filter(bullet => {
     bullet.x += bullet.vx;
@@ -3769,6 +4077,8 @@ function update() {
         bullet.hitPlayer = true;
         applyEnemyBulletDamage(bullet.damage, bullet.isCrit, bullet.type);
         spawnParticles(bullet.x, bullet.y, 6, '#ff4444');
+        spawnHitEffect(bullet.x, bullet.y);
+        playHitSound();
         return false;
       }
     }
@@ -3873,6 +4183,9 @@ function render() {
 
   // 绘制粒子
   drawParticles(ctx);
+
+  // 绘制特效
+  drawEffects(ctx);
 
   // 绘制子弹
   drawBullets(ctx);
@@ -4872,6 +5185,261 @@ function drawParticles(ctx) {
   ctx.globalAlpha = 1;
 }
 
+// ==================== 战斗特效系统 ====================
+
+// 多种命中特效（轮换）
+const HIT_EFFECTS = ['ring', 'star', 'sparkCluster', 'flash', 'ripple', 'hex'];
+const KILL_EFFECTS = ['explosion', 'shatter', 'firework', 'implosion', 'soulRise', 'shockwave'];
+
+function spawnHitEffect(x, y) {
+  const idx = gameState._hitEffectIdx % HIT_EFFECTS.length;
+  gameState._hitEffectIdx++;
+  const t = HIT_EFFECTS[idx];
+
+  switch (t) {
+    case 'ring':
+      gameState.effects.push({
+        type: 'ring', x, y, radius: 10, maxRadius: 70, life: 18, maxLife: 18,
+        color: '#ff6b6b', lineWidth: 2
+      });
+      break;
+    case 'star':
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 * i) / 8;
+        gameState.particles.push({
+          x, y, vx: Math.cos(angle) * 4, vy: Math.sin(angle) * 4,
+          size: 3, color: '#ffd93d', life: 12, maxLife: 12
+        });
+      }
+      for (let i = 0; i < 6; i++) {
+        gameState.particles.push({
+          x, y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+          size: 2 + Math.random() * 3, color: '#ff6b6b', life: 15, maxLife: 15
+        });
+      }
+      break;
+    case 'sparkCluster':
+      for (let i = 0; i < 10; i++) {
+        gameState.particles.push({
+          x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 3,
+          size: 1.5 + Math.random() * 2.5, color: i % 3 === 0 ? '#4dc9f6' : (i % 3 === 1 ? '#ffd93d' : '#fff'),
+          life: 8 + Math.random() * 10, maxLife: 18
+        });
+      }
+      break;
+    case 'flash':
+      gameState.effects.push({
+        type: 'flash', x, y, radius: 40, maxRadius: 40, life: 6, maxLife: 6,
+        color: '#ffffff'
+      });
+      break;
+    case 'ripple':
+      for (let r = 0; r < 3; r++) {
+        gameState.effects.push({
+          type: 'ring', x, y, radius: 5 + r * 8, maxRadius: 55 + r * 10,
+          life: 16 - r * 2, maxLife: 16, color: '#ff6600', lineWidth: 1.5 - r * 0.3
+        });
+      }
+      break;
+    case 'hex':
+      gameState.effects.push({
+        type: 'hexagon', x, y, radius: 15, maxRadius: 50,
+        life: 20, maxLife: 20, color: '#a55eea', rotation: Math.random() * Math.PI
+      });
+      break;
+  }
+}
+
+function spawnKillEffect(x, y) {
+  const idx = gameState._killEffectIdx % KILL_EFFECTS.length;
+  gameState._killEffectIdx++;
+  const t = KILL_EFFECTS[idx];
+
+  switch (t) {
+    case 'explosion':
+      for (let i = 0; i < 30; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 7;
+        gameState.particles.push({
+          x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
+          size: 2 + Math.random() * 5,
+          color: ['#ffd700', '#ff6600', '#ff0000', '#ff4444'][Math.floor(Math.random() * 4)],
+          life: 25 + Math.random() * 30, maxLife: 55
+        });
+      }
+      gameState.effects.push({
+        type: 'ring', x, y, radius: 5, maxRadius: 120,
+        life: 25, maxLife: 25, color: '#ffd700', lineWidth: 3
+      });
+      gameState.effects.push({
+        type: 'flash', x, y, radius: 80, maxRadius: 80,
+        life: 8, maxLife: 8, color: '#ffffff'
+      });
+      break;
+    case 'shatter':
+      for (let i = 0; i < 20; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 3 + Math.random() * 6;
+        gameState.particles.push({
+          x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 4,
+          size: 3 + Math.random() * 4,
+          color: ['#4dc9f6', '#a55eea', '#2ecc71', '#ffd93d'][Math.floor(Math.random() * 4)],
+          life: 20 + Math.random() * 25, maxLife: 45
+        });
+      }
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 * i) / 8;
+        gameState.effects.push({
+          type: 'line', x, y, angle, length: 30, maxLength: 70,
+          life: 15, maxLife: 15, color: '#4dc9f6', width: 2
+        });
+      }
+      break;
+    case 'firework':
+      for (let ring = 0; ring < 3; ring++) {
+        const delay = ring * 5;
+        const colors = ['#ffd700', '#ff6b6b', '#4dc9f6'];
+        for (let i = 0; i < 12; i++) {
+          const angle = (Math.PI * 2 * i) / 12 + ring * 0.3;
+          gameState.effects.push({
+            type: 'fireworkParticle', x, y, angle, speed: 3 + ring * 1.5, delay,
+            color: colors[ring], life: 25 + delay, maxLife: 25 + delay, size: 2 + ring
+          });
+        }
+      }
+      break;
+    case 'implosion':
+      for (let i = 0; i < 25; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        gameState.particles.push({
+          x, y, vx: Math.cos(angle) * (-3), vy: Math.sin(angle) * (-3),
+          size: 2 + Math.random() * 4, color: '#a55eea',
+          life: 10, maxLife: 10
+        });
+      }
+      gameState.effects.push({
+        type: 'ring', x, y, radius: 60, maxRadius: 0,
+        life: 12, maxLife: 12, color: '#a55eea', lineWidth: 4
+      });
+      break;
+    case 'soulRise':
+      for (let i = 0; i < 15; i++) {
+        gameState.particles.push({
+          x: x + (Math.random() - 0.5) * 40,
+          y: y + (Math.random() - 0.5) * 30,
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: -(2 + Math.random() * 4),
+          size: 3 + Math.random() * 4,
+          color: ['#4dc9f6', '#a55eea', '#ffd93d', '#2ecc71'][Math.floor(Math.random() * 4)],
+          life: 30 + Math.random() * 40, maxLife: 70
+        });
+      }
+      break;
+    case 'shockwave':
+      gameState.effects.push({
+        type: 'shockwave', x, y, radius: 10, maxRadius: 180,
+        life: 30, maxLife: 30, color: '#ffffff', lineWidth: 4
+      });
+      gameState.effects.push({
+        type: 'shockwave', x, y, radius: 5, maxRadius: 140,
+        life: 22, maxLife: 22, color: '#4dc9f6', lineWidth: 3
+      });
+      break;
+  }
+}
+
+function updateEffects() {
+  gameState.effects = gameState.effects.filter(eff => {
+    eff.life--;
+    if (eff.delay && eff.delay > 0) {
+      eff.delay--;
+      return true;
+    }
+    const progress = 1 - (eff.life / eff.maxLife);
+    switch (eff.type) {
+      case 'ring':
+      case 'shockwave':
+        eff.radius = eff.maxRadius * progress;
+        break;
+      case 'fireworkParticle':
+        eff.x += Math.cos(eff.angle) * eff.speed;
+        eff.y += Math.sin(eff.angle) * eff.speed - 1.5;
+        eff.vy = (eff.vy || 0) + 0.1;
+        break;
+      case 'line':
+        eff.length = eff.maxLength * progress;
+        break;
+      case 'hexagon':
+        eff.radius = eff.maxRadius * progress;
+        eff.rotation += 0.05;
+        break;
+    }
+    return eff.life > 0;
+  });
+}
+
+function drawEffects(ctx) {
+  gameState.effects.forEach(eff => {
+    if (eff.delay && eff.delay > 0) return;
+    const alpha = eff.life / eff.maxLife;
+    ctx.globalAlpha = alpha;
+
+    switch (eff.type) {
+      case 'ring':
+        ctx.strokeStyle = eff.color;
+        ctx.lineWidth = eff.lineWidth;
+        ctx.beginPath();
+        ctx.arc(eff.x, eff.y, eff.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      case 'shockwave':
+        ctx.strokeStyle = eff.color;
+        ctx.lineWidth = eff.lineWidth;
+        ctx.beginPath();
+        ctx.arc(eff.x, eff.y, eff.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      case 'flash':
+        const grad = ctx.createRadialGradient(eff.x, eff.y, 0, eff.x, eff.y, eff.radius);
+        grad.addColorStop(0, eff.color);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(eff.x, eff.y, eff.radius, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case 'line':
+        ctx.strokeStyle = eff.color;
+        ctx.lineWidth = eff.width;
+        ctx.beginPath();
+        ctx.moveTo(eff.x, eff.y);
+        ctx.lineTo(eff.x + Math.cos(eff.angle) * eff.length, eff.y + Math.sin(eff.angle) * eff.length);
+        ctx.stroke();
+        break;
+      case 'fireworkParticle':
+        ctx.fillStyle = eff.color;
+        ctx.beginPath();
+        ctx.arc(eff.x, eff.y, eff.size, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case 'hexagon':
+        ctx.strokeStyle = eff.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = eff.rotation + (Math.PI * 2 * i) / 6;
+          const px = eff.x + Math.cos(a) * eff.radius;
+          const py = eff.y + Math.sin(a) * eff.radius;
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        break;
+    }
+  });
+  ctx.globalAlpha = 1;
+}
+
 function drawBullets(ctx) {
   gameState.bullets.forEach(bullet => {
     ctx.save();
@@ -5576,6 +6144,18 @@ function applyBulletDamage(damage, isCrit, type) {
   spawnParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, particleCount,
     type === 'ult' ? '#ffd700' : (type === 'cannon' ? '#00d4ff' : '#ff6b6b'));
 
+  // 新战斗特效 + 音效
+  const hitX = enemy.x + enemy.width / 2;
+  const hitY = enemy.y + enemy.height / 2;
+  if (type === 'ult') {
+    spawnHitEffect(hitX, hitY);
+    spawnHitEffect(hitX - 10, hitY - 10);
+    playUltSound();
+  } else {
+    spawnHitEffect(hitX, hitY);
+    playHitSound();
+  }
+
   gameState.shakeAmount = type === 'ult' ? 15 : (type === 'cannon' ? 8 : (isCrit ? 5 : 2));
 
   const critText = isCrit ? ' 💥暴击！' : '';
@@ -5795,8 +6375,12 @@ function onEnemyDefeated() {
   saveGame();
 
   // 击败特效
-  spawnParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 25, '#ffd700');
-  gameState.shakeAmount = 6;
+  const dx = enemy.x + enemy.width / 2;
+  const dy = enemy.y + enemy.height / 2;
+  spawnParticles(dx, dy, 25, '#ffd700');
+  spawnKillEffect(dx, dy);
+  playKillSound();
+  gameState.shakeAmount = enemy.isBoss ? 12 : 6;
 
   const diamondText = diamondEarned > 0 ? ` 💎+${diamondEarned}` : '';
   addBattleLog(`🎉 击败了 ${enemy.name}！获得 ${goldEarned} 星币！${diamondText}`, 'system');
@@ -5961,7 +6545,7 @@ function onEnemyDefeated() {
   gameState.currentMonsterIndex++;
   const currentPlanet = PLANETS[gameState.currentPlanetIndex];
 
-  if (gameState.currentMonsterIndex >= 100) {
+  if (gameState.currentMonsterIndex >= currentPlanet.monsters.length) {
     gameState.completedPlanets.push(currentPlanet.id);
     gameState.currentPlanetIndex++;
     gameState.currentMonsterIndex = 0;
@@ -6008,7 +6592,7 @@ function onEnemyDefeated() {
     gameState.player.isDefending = false;
 
     setTimeout(() => {
-      document.getElementById('battle-stage').textContent = gameState.currentMonsterIndex + 1;
+      document.getElementById('battle-stage').textContent = `🎯 第 ${gameState.currentMonsterIndex + 1}/${currentPlanet.monsters.length} 关`;
       updateSkillCDs();
       updateHeaderUI();
 
@@ -6164,6 +6748,9 @@ onEnemyDefeated = function() {
     saveGame();
 
     spawnParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 50, '#ffd700');
+    spawnKillEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+    spawnKillEffect(enemy.x + enemy.width / 2 - 30, enemy.y + enemy.height / 2 - 20);
+    playKillSound();
     gameState.shakeAmount = 20;
 
     addBattleLog(`🏆🏆🏆 击败了最终Boss「${enemy.name}」！获得 ${enemy.gold} 星币！💎+5`, 'system');
@@ -6223,7 +6810,7 @@ function updateHeaderUI() {
     }
     if (nameEl) nameEl.textContent = '👨‍🚀 ' + displayName;
   });
-  // 更新武器库页面的货币（如果打开中）
+  // 更新商店页面的货币（如果打开中）
   const shopGold = document.getElementById('shop-gold');
   const shopDia = document.getElementById('shop-diamond');
   if (shopGold) shopGold.textContent = p.gold;
@@ -6261,7 +6848,8 @@ function saveGame() {
     pkProgress: gameState._pkProgress || { novice: 0, expert: 0 },
     lastRankId: gameState._lastRankId,
     lastRankName: currentRank.name,
-    lastRankIcon: currentRank.icon
+    lastRankIcon: currentRank.icon,
+    consumableBonusHp: p.consumableBonusHp || 0
   };
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -6297,6 +6885,9 @@ function loadGame() {
     }
     if (typeof data.lastRankIcon === 'string') {
       gameState._lastRankIcon = data.lastRankIcon;
+    }
+    if (typeof data.consumableBonusHp === 'number') {
+      p.consumableBonusHp = data.consumableBonusHp;
     }
   } catch (e) {
     // 存档损坏时静默失败，使用默认值
@@ -6702,6 +7293,119 @@ function escHtmlForFriends(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ==================== 好友按钮长按：删除名字中的「作者」 ====================
+
+let _friendsLongPressTimer = null;
+let _friendsLongPressTriggered = false;
+const FRIENDS_LONG_PRESS_MS = 500;
+
+function handleFriendsBtnDown(e) {
+  if (e.type === 'touchstart') e.preventDefault();
+  _friendsLongPressTriggered = false;
+  _friendsLongPressTimer = setTimeout(() => {
+    _friendsLongPressTriggered = true;
+    const input = document.getElementById('player-name-input');
+    if (input) {
+      input.value = input.value.split('作者').join('');
+      input.focus();
+      // 震动/视觉反馈
+      if (navigator.vibrate) navigator.vibrate(80);
+      const btn = document.getElementById('friends-btn');
+      if (btn) {
+        btn.style.transform = 'scale(0.95)';
+        setTimeout(() => { btn.style.transform = ''; }, 150);
+      }
+    }
+  }, FRIENDS_LONG_PRESS_MS);
+}
+
+function handleFriendsBtnUp(e) {
+  if (_friendsLongPressTimer) {
+    clearTimeout(_friendsLongPressTimer);
+    _friendsLongPressTimer = null;
+  }
+}
+
+function handleFriendsBtnClick(e) {
+  // 长按触发后，不再响应点击打开好友界面
+  if (_friendsLongPressTriggered) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+  openFriendsScreen();
+}
+
+// ==================== 建议反馈系统 ====================
+
+const FEEDBACK_KEY = 'planetBattle_feedback';
+
+function openFeedbackScreen() {
+  showScreen('feedback-screen');
+  renderFeedbackList();
+  const input = document.getElementById('feedback-input');
+  if (input) input.focus();
+}
+
+function closeFeedbackScreen() {
+  showScreen('start-screen');
+}
+
+function loadFeedback() {
+  try {
+    const raw = localStorage.getItem(FEEDBACK_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveFeedback(list) {
+  try {
+    localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
+  } catch (e) {}
+}
+
+function submitFeedback() {
+  const input = document.getElementById('feedback-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) {
+    alert('请先输入建议内容哦～');
+    return;
+  }
+
+  const list = loadFeedback();
+  list.push({
+    text: text,
+    time: new Date().toLocaleString('zh-CN'),
+    name: (document.getElementById('player-name-input')?.value?.trim() || '匿名宇航员')
+  });
+  saveFeedback(list);
+  input.value = '';
+  renderFeedbackList();
+  alert('✅ 感谢你的建议！我们已经收到了。');
+}
+
+function renderFeedbackList() {
+  const container = document.getElementById('feedback-list');
+  if (!container) return;
+  const list = loadFeedback();
+  if (list.length === 0) {
+    container.innerHTML = '<div class="feedback-empty">📭 还没有建议，来抢沙发吧！</div>';
+    return;
+  }
+  let html = '';
+  for (let i = list.length - 1; i >= 0; i--) {
+    const item = list[i];
+    html += '<div class="feedback-item">';
+    html += '<div class="feedback-item-text">' + escHtmlForFriends(item.text || '') + '</div>';
+    html += '<div class="feedback-item-meta">' + escHtmlForFriends(item.name || '匿名') + ' · ' + escHtmlForFriends(item.time || '') + '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
 }
 
 // ==================== 全局键盘监听 ====================

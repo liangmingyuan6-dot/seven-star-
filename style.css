@@ -945,7 +945,7 @@ kbd {
   padding: 12px 32px;
 }
 
-/* ============ 武器库界面 ============ */
+/* ============ 商店界面 ============ */
 .shop-content {
   text-align: center;
   z-index: 2;
@@ -992,6 +992,58 @@ kbd {
 .btn-exchange:hover {
   background: rgba(77,201,246,0.2);
   box-shadow: 0 0 10px rgba(77,201,246,0.2);
+}
+
+/* 商店消耗品 */
+.shop-consumables {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.consumable-card {
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 14px 22px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  min-width: 130px;
+}
+
+.consumable-card:hover {
+  border-color: #f39c12;
+  background: rgba(243,156,18,0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(243,156,18,0.2);
+}
+
+.consumable-icon {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.consumable-name {
+  font-weight: bold;
+  font-size: 1.05rem;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.consumable-desc {
+  font-size: 0.78rem;
+  color: #2ecc71;
+  margin-bottom: 6px;
+}
+
+.consumable-price {
+  font-size: 0.92rem;
+  color: #ffd93d;
+  font-weight: bold;
 }
 
 .btn-video {
@@ -1043,7 +1095,7 @@ kbd {
 .shop-grid::-webkit-scrollbar-track { background: transparent; }
 .shop-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
 
-/* 武器库分页器 */
+/* 商店分页器 */
 .shop-pager {
   display: flex;
   align-items: center;
@@ -1770,6 +1822,128 @@ kbd {
   box-shadow: 0 0 30px rgba(175, 122, 197, 0.6);
 }
 
+/* ============ 反馈界面 ============ */
+.feedback-content {
+  text-align: center;
+  z-index: 2;
+  width: 92%;
+  max-width: 640px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeInUp 0.5s ease;
+}
+
+.feedback-title {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #4dc9f6, #a55eea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.feedback-subtitle {
+  color: #aaa;
+  margin-bottom: 18px;
+  font-size: 1rem;
+}
+
+.feedback-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 1rem;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.feedback-input::placeholder {
+  color: #888;
+}
+
+.feedback-input:focus {
+  border-color: rgba(77,201,246,0.6);
+  background: rgba(255,255,255,0.12);
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.feedback-list-wrapper {
+  width: 100%;
+  background: rgba(0,0,0,0.25);
+  border-radius: 16px;
+  padding: 14px 16px;
+  max-height: 36vh;
+  overflow-y: auto;
+}
+
+.feedback-list-title {
+  font-size: 1.05rem;
+  color: #ddd;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback-empty {
+  color: #888;
+  font-size: 0.95rem;
+  padding: 10px 0;
+}
+
+.feedback-item {
+  background: rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.feedback-item-text {
+  color: #fff;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.feedback-item-meta {
+  color: #888;
+  font-size: 0.78rem;
+  margin-top: 6px;
+  text-align: right;
+}
+
+.btn-feedback {
+  background: linear-gradient(135deg, #4dc9f6, #2980b9);
+  margin-top: 12px;
+  font-size: 1.3rem;
+  padding: 15px 45px;
+  box-shadow: 0 0 18px rgba(77, 201, 246, 0.35);
+}
+
+.btn-feedback:hover {
+  background: linear-gradient(135deg, #6dd5f9, #4dc9f6);
+  box-shadow: 0 0 30px rgba(77, 201, 246, 0.55);
+}
+
 /* ============ 段位详情界面 ============ */
 .rank-content {
   text-align: center;
@@ -1939,6 +2113,128 @@ kbd {
 
 .rank-actions .btn-back {
   margin-top: 0;
+}
+
+/* ============ 反馈界面 ============ */
+.feedback-content {
+  text-align: center;
+  z-index: 2;
+  width: 92%;
+  max-width: 640px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeInUp 0.5s ease;
+}
+
+.feedback-title {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #4dc9f6, #a55eea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.feedback-subtitle {
+  color: #aaa;
+  margin-bottom: 18px;
+  font-size: 1rem;
+}
+
+.feedback-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 1rem;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.feedback-input::placeholder {
+  color: #888;
+}
+
+.feedback-input:focus {
+  border-color: rgba(77,201,246,0.6);
+  background: rgba(255,255,255,0.12);
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.feedback-list-wrapper {
+  width: 100%;
+  background: rgba(0,0,0,0.25);
+  border-radius: 16px;
+  padding: 14px 16px;
+  max-height: 36vh;
+  overflow-y: auto;
+}
+
+.feedback-list-title {
+  font-size: 1.05rem;
+  color: #ddd;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback-empty {
+  color: #888;
+  font-size: 0.95rem;
+  padding: 10px 0;
+}
+
+.feedback-item {
+  background: rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.feedback-item-text {
+  color: #fff;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.feedback-item-meta {
+  color: #888;
+  font-size: 0.78rem;
+  margin-top: 6px;
+  text-align: right;
+}
+
+.btn-feedback {
+  background: linear-gradient(135deg, #4dc9f6, #2980b9);
+  margin-top: 12px;
+  font-size: 1.3rem;
+  padding: 15px 45px;
+  box-shadow: 0 0 18px rgba(77, 201, 246, 0.35);
+}
+
+.btn-feedback:hover {
+  background: linear-gradient(135deg, #6dd5f9, #4dc9f6);
+  box-shadow: 0 0 30px rgba(77, 201, 246, 0.55);
 }
 
 /* ============ 好友搜索界面 ============ */
