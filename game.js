@@ -6943,6 +6943,23 @@ function saveLeaderboard(data) {
   }
 }
 
+// 从排行榜中移除指定名字（换名时把旧名字从排行榜删除，只保留在旧名字区）
+function removeNameFromLeaderboard(name) {
+  if (!name) return;
+  let lb = loadLeaderboard();
+  const beforeLen = lb.length;
+  lb = lb.filter(item => item.name !== name);
+  if (lb.length !== beforeLen) {
+    saveLeaderboard(lb);
+    updateStartPlayerCount();
+    // 触发跨标签页同步
+    _lbLastUpdateTime = Date.now();
+    try {
+      localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
+    } catch (e) {}
+  }
+}
+
 function switchLeaderboardTab(tabId) {
   _lbActiveTab = tabId;
   // 更新标签页样式
@@ -7132,6 +7149,13 @@ function submitToLeaderboard() {
 
   saveLeaderboard(leaderboard);
   renderLeaderboard();
+
+  // 更新玩家数量并触发跨标签页同步
+  updateStartPlayerCount();
+  _lbLastUpdateTime = Date.now();
+  try {
+    localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
+  } catch (e) {}
 
   // 轻提示
   const btn = document.querySelector('#leaderboard-screen .btn-start');
@@ -7338,6 +7362,13 @@ function autoSubmitLeaderboard() {
   });
   if (leaderboard.length > LB_MAX) leaderboard.length = LB_MAX;
   saveLeaderboard(leaderboard);
+
+  // 触发跨标签页同步
+  updateStartPlayerCount();
+  _lbLastUpdateTime = Date.now();
+  try {
+    localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
+  } catch (e) {}
 
   // 短暂提示后跳转排行榜
   alert('✅ 已成功提交到排行榜！');
@@ -7605,7 +7636,7 @@ function saveLastName(name) {
   } catch (e) {}
 }
 
-// 开始游戏时追踪旧名字：若名字变更，旧名字存入列表
+// 开始游戏时追踪旧名字：若名字变更，旧名字存入列表，并从排行榜中移除旧名字
 function trackOldName() {
   const input = document.getElementById('player-name-input');
   const newName = (input && input.value.trim()) ? input.value.trim() : '宇航员';
@@ -7621,6 +7652,9 @@ function trackOldName() {
       oldNames.push({ name: lastName, remaining: 3 });
     }
     saveOldNames(oldNames);
+
+    // 关键：从排行榜中移除旧名字（每个用户只能有一个名字在排行榜上）
+    removeNameFromLeaderboard(lastName);
   }
 
   // 如果新名字在旧名字列表中，移除它（因为已经重新使用了）
