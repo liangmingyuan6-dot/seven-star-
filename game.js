@@ -1421,6 +1421,23 @@ function checkAuthorPenalty() {
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
+  // 每次显示开始界面时更新玩家数量
+  if (screenId === 'start-screen') {
+    updateStartPlayerCount();
+  }
+}
+
+// 更新开始界面的玩家数量显示
+function updateStartPlayerCount() {
+  const countEl = document.getElementById('start-player-count');
+  if (!countEl) return;
+  const lb = loadLeaderboard();
+  const count = lb.length;
+  if (count > 0) {
+    countEl.textContent = `(${count}人)`;
+  } else {
+    countEl.textContent = '';
+  }
 }
 
 // ==================== 游戏流程 ====================
@@ -1432,9 +1449,6 @@ function startGame() {
 
   // 检查名字是否包含「作者」
   checkAuthorPenalty();
-
-  // 首次开始游戏：永久锁定名字
-  lockNameOnFirstRun();
 
   // 旧名字追踪：保存上次使用的名字，若名字变更则存入旧名字库
   trackOldName();
@@ -6968,6 +6982,8 @@ function openLeaderboard(fromId) {
   showScreen('leaderboard-screen');
   // 输入名字后自动提交成绩
   autoSubmitIfHasStats();
+  // 启动排行榜自动刷新（每3秒刷新，展示所有用户最新信息）
+  startLeaderboardAutoRefresh();
 }
 
 // 如果玩家有游戏数据，则自动提交（新玩家也会被记录）
@@ -6979,6 +6995,11 @@ function autoSubmitIfHasStats() {
 }
 
 // 静默自动保存到排行榜（不显示按钮反馈，后台静默更新）
+// 排行榜更新事件键（用于跨标签页同步）
+const LB_UPDATE_KEY = 'planetBattle_lb_update_ts';
+let _lbRefreshTimer = null;
+let _lbLastUpdateTime = null;
+
 function silentLeaderboardSubmit() {
   const p = gameState.player;
   if (!p) return;
@@ -7016,9 +7037,50 @@ function silentLeaderboardSubmit() {
   }
 
   saveLeaderboard(leaderboard);
+
+  // 更新开始界面的玩家数量
+  updateStartPlayerCount();
+
+  // 触发跨标签页同步事件
+  _lbLastUpdateTime = Date.now();
+  try {
+    localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
+  } catch (e) {}
 }
 
+// 启动排行榜自动刷新（排行榜界面打开时调用）
+function startLeaderboardAutoRefresh() {
+  stopLeaderboardAutoRefresh();
+  _lbRefreshTimer = setInterval(() => {
+    renderLeaderboard();
+  }, 3000);
+}
+
+// 停止排行榜自动刷新
+function stopLeaderboardAutoRefresh() {
+  if (_lbRefreshTimer) {
+    clearInterval(_lbRefreshTimer);
+    _lbRefreshTimer = null;
+  }
+}
+
+// 监听其他标签页的排行榜更新（跨标签页同步）
+(function initLeaderboardSync() {
+  window.addEventListener('storage', function(e) {
+    if (e.key === LB_UPDATE_KEY && e.newValue) {
+      _lbLastUpdateTime = parseInt(e.newValue, 10) || Date.now();
+      // 如果排行榜界面当前打开，自动刷新显示
+      const lbScreen = document.getElementById('leaderboard-screen');
+      if (lbScreen && lbScreen.classList.contains('active')) {
+        renderLeaderboard();
+      }
+    }
+  });
+})();
+
 function closeLeaderboard() {
+  // 停止排行榜自动刷新
+  stopLeaderboardAutoRefresh();
   // 按照「从哪里来回哪里去」的原则返回
   if (_lbReturnScreen === 'planet-screen') {
     showScreen('planet-screen');
@@ -7108,8 +7170,17 @@ function renderLeaderboard() {
   const isComposite = _lbActiveTab === 'composite';
   const colspan = isComposite ? 7 : 3;
 
+  // 更新实时状态指示器
+  const liveStatus = document.getElementById('leaderboard-live-status');
+  if (liveStatus) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    liveStatus.textContent = `🔄 实时同步中… 上次更新: ${timeStr}（共 ${allData.length} 位玩家）`;
+  }
+
   if (allData.length === 0) {
     tbody.innerHTML = `<tr><td colspan="${colspan}" class="lb-empty">暂无数据，快去冒险吧！🚀</td></tr>`;
+    if (liveStatus) liveStatus.textContent = '🔄 等待玩家加入…';
     return;
   }
 
@@ -7507,161 +7578,7 @@ showScreen('start-screen');
 })();
 renderOldNames();
 
-// ==================== 名字锁定 & 旧名字系统函数 ====================
-
-// 切换名字锁定状态：已锁定↔未锁定
-function toggleNameLock() {
-  const isCurrentlyLocked = (() => {
-    try { return localStorage.getItem(NAME_LOCK_KEY) === '1'; } catch (e) { return false; }
-  })();
-
-  if (isCurrentlyLocked) {
-    // ===== 解除锁定 =====
-    try {
-      localStorage.removeItem(NAME_LOCK_KEY);
-      localStorage.removeItem(LOCKED_NAME_KEY);
-    } catch (e) {
-      const d = new Date();
-      d.setFullYear(d.getFullYear() - 1);
-      document.cookie = NAME_LOCK_KEY + '=;expires=' + d.toUTCString() + ';path=/';
-      document.cookie = LOCKED_NAME_KEY + '=;expires=' + d.toUTCString() + ';path=/';
-    }
-
-    const input = document.getElementById('player-name-input');
-    if (input) {
-      const savedName = (() => {
-        try { return localStorage.getItem(NAME_KEY) || ''; } catch (e) { return ''; }
-      })();
-      input.value = savedName;
-      input.readOnly = false;
-      input.disabled = false;
-      input.classList.remove('name-locked');
-      input.placeholder = '请输入你的名字';
-      input.title = '';
-    }
-
-    const label = document.querySelector('.name-input-label');
-    if (label) {
-      label.textContent = '👨‍🚀';
-      label.title = '点击可重新锁定名字';
-    }
-
-    const badge = document.getElementById('name-locked-badge');
-    if (badge) {
-      badge.className = 'name-unlocked-badge';
-      badge.textContent = '未锁定';
-      badge.title = '点击可重新锁定名字';
-    }
-
-    const oldBar = document.getElementById('old-names-bar');
-    if (oldBar) oldBar.style.display = '';
-
-  } else {
-    // ===== 重新锁定 =====
-    const input = document.getElementById('player-name-input');
-    const name = (input && input.value.trim()) ? input.value.trim() : '宇航员';
-
-    try {
-      localStorage.setItem(LOCKED_NAME_KEY, name);
-      localStorage.setItem(NAME_LOCK_KEY, '1');
-      localStorage.setItem(NAME_KEY, name);
-    } catch (e) {
-      const d = new Date();
-      d.setFullYear(d.getFullYear() + 100);
-      document.cookie = LOCKED_NAME_KEY + '=' + encodeURIComponent(name) + ';expires=' + d.toUTCString() + ';path=/';
-      document.cookie = NAME_LOCK_KEY + '=1;expires=' + d.toUTCString() + ';path=/';
-    }
-
-    if (input) {
-      input.value = name;
-      input.readOnly = true;
-      input.disabled = true;
-      input.classList.add('name-locked');
-      input.placeholder = '';
-      input.title = '名字已永久锁定，关机重启也不会变';
-    }
-
-    const label = document.querySelector('.name-input-label');
-    if (label) {
-      label.textContent = '🔒';
-      label.title = '点击可解除名字锁定';
-    }
-
-    const badge = document.getElementById('name-locked-badge');
-    if (badge) {
-      badge.className = 'name-locked-badge';
-      badge.textContent = '已锁定';
-      badge.title = '点击可解除名字锁定';
-    }
-
-    const oldBar = document.getElementById('old-names-bar');
-    if (oldBar) oldBar.style.display = 'none';
-  }
-}
-
-// 为标签和徽章绑定切换事件（锁定/未锁定两态通用）
-function bindToggleClick() {
-  const label = document.querySelector('.name-input-label');
-  if (label) {
-    label.classList.add('lockable-label');
-    label.onclick = toggleNameLock;
-  }
-  const badge = document.getElementById('name-locked-badge');
-  if (badge) {
-    badge.onclick = toggleNameLock;
-    badge.classList.add('clickable-badge');
-  }
-}
-
-// 首次开始游戏时永久锁定名字（localStorage 跨会话持久，关电脑也不丢）
-function lockNameOnFirstRun() {
-  // 已锁定则跳过
-  try {
-    if (localStorage.getItem(NAME_LOCK_KEY) === '1') return;
-  } catch (e) { return; }
-
-  const input = document.getElementById('player-name-input');
-  const name = (input && input.value.trim()) ? input.value.trim() : '宇航员';
-
-  try {
-    localStorage.setItem(LOCKED_NAME_KEY, name);
-    localStorage.setItem(NAME_LOCK_KEY, '1');
-    localStorage.setItem(NAME_KEY, name);
-  } catch (e) {
-    // localStorage 不可用时降级 cookie
-    const d = new Date();
-    d.setFullYear(d.getFullYear() + 100); // 100年有效期 ≈ 永久
-    document.cookie = LOCKED_NAME_KEY + '=' + encodeURIComponent(name) + ';expires=' + d.toUTCString() + ';path=/';
-    document.cookie = NAME_LOCK_KEY + '=1;expires=' + d.toUTCString() + ';path=/';
-  }
-
-  // 立即锁定 UI
-  input.value = name;
-  input.readOnly = true;
-  input.disabled = true;
-  input.classList.add('name-locked');
-  input.placeholder = '';
-  input.title = '名字已永久锁定，关机重启也不会变';
-
-  // 切换标签为锁图标
-  const label = document.querySelector('.name-input-label');
-  if (label) label.textContent = '🔒';
-  // 插入锁定提示
-  const wrapper = document.querySelector('.name-input-wrapper');
-  if (wrapper && !document.getElementById('name-locked-badge')) {
-    const badge = document.createElement('span');
-    badge.id = 'name-locked-badge';
-    badge.className = 'name-locked-badge';
-    badge.textContent = '已锁定';
-    wrapper.appendChild(badge);
-  }
-
-  bindToggleClick();
-
-  // 隐藏旧名字按钮条
-  const oldBar = document.getElementById('old-names-bar');
-  if (oldBar) oldBar.style.display = 'none';
-}
+// ==================== 旧名字系统函数 ====================
 
 function loadOldNames() {
   try {
@@ -7785,10 +7702,8 @@ function escHtml(str) {
   return div.innerHTML;
 }
 
-// 名字持久化：刷新页面后恢复名字，首次游戏后永久锁定
+// 名字持久化：刷新页面后恢复名字
 const NAME_KEY = 'planetBattle_playerName';
-const NAME_LOCK_KEY = 'planetBattle_nameLocked';
-const LOCKED_NAME_KEY = 'planetBattle_lockedName';
 
 (function initPlayerName() {
   const input = document.getElementById('player-name-input');
@@ -7814,44 +7729,7 @@ const LOCKED_NAME_KEY = 'planetBattle_lockedName';
     return match ? decodeURIComponent(match[2]) : null;
   }
 
-  // 检查是否已永久锁定名字
-  function isNameLocked() {
-    try { return localStorage.getItem(NAME_LOCK_KEY) === '1'; } catch (e) { return false; }
-  }
-
-  function getLockedName() {
-    try { return localStorage.getItem(LOCKED_NAME_KEY) || ''; } catch (e) { return ''; }
-  }
-
-  // 如果名字已锁定 → 输入框变为只读展示
-  if (isNameLocked()) {
-    const lockedName = getLockedName();
-    input.value = lockedName;
-    input.readOnly = true;
-    input.disabled = true;
-    input.classList.add('name-locked');
-    input.placeholder = '';
-    input.title = '名字已永久锁定，关机重启也不会变';
-    // 修改标签为锁图标
-    const label = document.querySelector('.name-input-label');
-    if (label) label.textContent = '🔒';
-    // 插入锁定提示
-    const wrapper = document.querySelector('.name-input-wrapper');
-    if (wrapper && !document.getElementById('name-locked-badge')) {
-      const badge = document.createElement('span');
-      badge.id = 'name-locked-badge';
-      badge.className = 'name-locked-badge';
-      badge.textContent = '已锁定';
-      wrapper.appendChild(badge);
-    }
-    bindToggleClick();
-    // 隐藏旧名字按钮条（名字已锁定，无需切换）
-    const oldBar = document.getElementById('old-names-bar');
-    if (oldBar) oldBar.style.display = 'none';
-    return;
-  }
-
-  // 未锁定状态：恢复名字
+  // 恢复名字
   const savedName = loadName();
   if (savedName) {
     input.value = savedName;

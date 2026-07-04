@@ -29,7 +29,7 @@
       </div>
       <div id="old-names-bar" class="old-names-bar"></div>
       <button class="btn btn-start" onclick="startGame()">🚀 开始冒险</button>
-      <button class="btn btn-leaderboard" onclick="openLeaderboardFromStart()">🏆 排行榜</button>
+      <button class="btn btn-leaderboard" onclick="openLeaderboardFromStart()">🏆 排行榜 <span id="start-player-count" class="start-player-count"></span></button>
       <button class="btn btn-rank" onclick="openRankScreen()">🏅 段位</button>
       <button class="btn btn-friends" id="friends-btn"
         onmousedown="handleFriendsBtnDown(event)"
@@ -90,6 +90,7 @@
       <h2 class="leaderboard-title">🏆 排行榜</h2>
       <p class="leaderboard-subtitle">太阳系最强宇航员</p>
       <p class="leaderboard-my-name">我的名字：<span id="leaderboard-my-name-text">宇航员</span></p>
+      <p class="leaderboard-live-status" id="leaderboard-live-status">🔄 实时同步中…</p>
       <div class="lb-tabs">
         <button class="lb-tab active" onclick="switchLeaderboardTab('composite')">📊 综合排名</button>
         <button class="lb-tab" onclick="switchLeaderboardTab('kills')">⚔️ 总击杀</button>
