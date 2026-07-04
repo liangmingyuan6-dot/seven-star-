@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>七大行星闯关 - Solar System Quest</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 开始界面 -->
+  <div id="start-screen" class="screen active">
+    <div class="stars-bg"></div>
+    <div class="start-content">
+      <h1 class="game-title">🪐 七大行星闯关</h1>
+      <p class="subtitle">Solar System Quest</p>
+      <div class="planet-preview">
+        <span class="mini-planet p-mercury"></span>
+        <span class="mini-planet p-venus"></span>
+        <span class="mini-planet p-mars"></span>
+        <span class="mini-planet p-jupiter"></span>
+        <span class="mini-planet p-saturn"></span>
+        <span class="mini-planet p-uranus"></span>
+        <span class="mini-planet p-neptune"></span>
+      </div>
+      <p class="name-hint">⚠️ 温馨提示：名字请勿使用「作者」这两个字。如果使用「作者」二字，则会扣掉所有本游戏的资源，已收的钱不会奉还，谢谢配合。</p>
+      <div class="name-input-wrapper">
+        <span class="name-input-label">👨‍🚀</span>
+        <input type="text" class="name-input" id="player-name-input" placeholder="请输入你的名字">
+      </div>
+      <div id="old-names-bar" class="old-names-bar"></div>
+      <button class="btn btn-start" onclick="startGame()">🚀 开始冒险</button>
+      <button class="btn btn-leaderboard" onclick="openLeaderboardFromStart()">🏆 排行榜</button>
+      <button class="btn btn-rank" onclick="openRankScreen()">🏅 段位</button>
+      <button class="btn btn-friends" onclick="openFriendsScreen()">👥 好友</button>
+      <div class="key-hint-preview">
+        <p>操作说明：</p>
+        <div class="key-row">
+          <kbd>↑↓←→</kbd> 移动 &nbsp;
+          <kbd>🖱️ 鼠标</kbd> 瞄准 &nbsp;
+          <kbd>🖱️ 长按左键</kbd> 连射 &nbsp;
+          <kbd>Q</kbd> 蓄能炮 &nbsp;
+          <kbd>P</kbd> 大招 &nbsp;
+          <kbd>W</kbd> 防御 &nbsp;
+          <kbd>ESC</kbd> 暂停 &nbsp;
+          <kbd>Enter</kbd> 继续 &nbsp;
+          <kbd>Alt</kbd> 返回星球选择 &nbsp;
+          <kbd>e</kbd> 返回主页
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 星球选择界面 -->
+  <div id="planet-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="game-header">
+      <div class="player-info">
+        <span class="player-name" id="header-name">👨‍🚀 宇航员</span>
+        <span class="player-hp">❤️ <span id="header-hp">150</span>/150</span>
+        <span class="player-atk">⚔️ <span id="header-atk">20</span></span>
+        <span class="player-def">🛡️ <span id="header-def">8</span></span>
+        <span class="player-gold">⭐ <span id="header-gold">0</span></span>
+        <span class="player-diamond">💎 <span id="header-diamond">0</span></span>
+        <span class="player-rank" id="header-rank">🌌 太空流浪者</span>
+      </div>
+    </div>
+    <h2 class="screen-title">🌌 选择行星</h2>
+    <div id="planet-grid" class="planet-grid"></div>
+    <div class="planet-actions">
+      <button class="btn btn-shop" onclick="openShop()">🏪 武器库</button>
+      <button class="btn btn-trial" onclick="openTrialTower()">🏯 试炼塔</button>
+      <button class="btn btn-pk" onclick="openPKArena()">⚔️ PK竞技场</button>
+
+      <button class="btn btn-leaderboard" onclick="openLeaderboard('planet-screen')">🏆 排行榜</button>
+      <button class="btn btn-back" onclick="backToStart()">🏠 返回主页</button>
+    </div>
+  </div>
+
+  <!-- 排行榜界面 -->
+  <div id="leaderboard-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="leaderboard-content">
+      <h2 class="leaderboard-title">🏆 排行榜</h2>
+      <p class="leaderboard-subtitle">太阳系最强宇航员</p>
+      <p class="leaderboard-my-name">我的名字：<span id="leaderboard-my-name-text">宇航员</span></p>
+      <div class="lb-tabs">
+        <button class="lb-tab active" onclick="switchLeaderboardTab('composite')">📊 综合排名</button>
+        <button class="lb-tab" onclick="switchLeaderboardTab('kills')">⚔️ 总击杀</button>
+        <button class="lb-tab" onclick="switchLeaderboardTab('rank')">🏅 段位</button>
+        <button class="lb-tab" onclick="switchLeaderboardTab('planets')">🪐 通关行星</button>
+        <button class="lb-tab" onclick="switchLeaderboardTab('gold')">💰 金币</button>
+        <button class="lb-tab" onclick="switchLeaderboardTab('diamond')">💎 钻石</button>
+      </div>
+      <div class="leaderboard-table-wrapper">
+        <table class="leaderboard-table">
+          <thead id="lb-thead">
+            <tr>
+              <th class="lb-rank">排名</th>
+              <th class="lb-name">名字</th>
+              <th class="lb-kills">⚔️ 总击杀</th>
+              <th class="lb-rankname">🏅 段位</th>
+              <th class="lb-planets">🪐 通关行星</th>
+              <th class="lb-gold">💰 金币</th>
+              <th class="lb-diamond">💎 钻石</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-tbody">
+            <tr><td colspan="7" class="lb-empty">暂无数据，快去冒险吧！🚀</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="leaderboard-actions">
+        <button class="btn btn-start" onclick="submitToLeaderboard()">📤 提交我的成绩</button>
+        <button class="btn btn-back" onclick="closeLeaderboard()">🔙 返回</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 好友搜索界面 -->
+  <div id="friends-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="friends-content">
+      <h2 class="friends-title">👥 搜索好友</h2>
+      <p class="friends-subtitle">输入名字关键字，查找排行榜中的类似名字</p>
+      <div class="friends-search-bar">
+        <input type="text" id="friends-search-input" class="friends-search-input" placeholder="输入名字关键字…" oninput="searchFriends()">
+        <span class="friends-search-icon">🔍</span>
+      </div>
+      <div class="friends-table-wrapper">
+        <table class="friends-table">
+          <thead>
+            <tr>
+              <th class="fr-name">名字</th>
+              <th class="fr-kills">⚔️ 总击杀</th>
+              <th class="fr-rank">🏅 段位</th>
+              <th class="fr-planets">🪐 通关行星</th>
+              <th class="fr-gold">💰 金币</th>
+              <th class="fr-diamond">💎 钻石</th>
+            </tr>
+          </thead>
+          <tbody id="friends-tbody">
+            <tr><td colspan="6" class="fr-empty">🔍 在上方搜索栏输入名字关键字即可搜索</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-back" onclick="closeFriendsScreen()">🔙 返回</button>
+    </div>
+  </div>
+
+  <!-- 段位详情界面 -->
+  <div id="rank-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="rank-content">
+      <h2 class="rank-title">🏅 段位系统</h2>
+      <div class="rank-current">
+        <div class="rank-current-icon" id="rank-current-icon">🌌</div>
+        <div class="rank-current-info">
+          <div class="rank-current-name" id="rank-current-name">太空流浪者</div>
+          <div class="rank-current-level">段位等级：<span id="rank-current-level">1</span> / 29</div>
+        </div>
+      </div>
+      <div class="rank-progress-bar">
+        <div class="rank-progress-fill" id="rank-progress-fill" style="width:0%"></div>
+      </div>
+      <div class="rank-progress-text" id="rank-progress-text">距下一段位还需 10 击杀</div>
+      <div class="rank-ladder">
+        <h3 class="rank-ladder-title">📋 段位阶梯</h3>
+        <div class="rank-ladder-list" id="rank-ladder-list"></div>
+      </div>
+      <div class="rank-actions">
+        <button class="btn btn-back" onclick="showScreen('start-screen')">🔙 返回</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 武器库界面 -->
+  <div id="shop-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="shop-content">
+      <h2 class="shop-title">🏪 武器库</h2>
+      <div class="shop-currency">
+        <span>⭐ 金币：<b id="shop-gold">0</b></span>
+        <span>💎 钻石：<b id="shop-diamond">0</b></span>
+        <button class="btn-exchange" onclick="convertDiamondToGold()" title="1钻石→200金币">💱 兑换金币</button>
+      </div>
+      <div class="shop-tabs">
+        <button class="shop-tab active" id="tab-low" onclick="switchShopTab('low')">🟢 低级武器<br><small>250把 | 段位 1-5</small></button>
+        <button class="shop-tab" id="tab-mid" onclick="switchShopTab('mid')">🟡 中级武器<br><small>250把 | 段位 6-10</small></button>
+        <button class="shop-tab" id="tab-high" onclick="switchShopTab('high')">🔴 高级武器<br><small>250把 | 段位 11-16</small></button>
+        <button class="shop-tab" id="tab-ult" onclick="switchShopTab('ult')">👑 终极武器<br><small>249把 | 段位 17-29</small></button>
+      </div>
+      <div id="shop-pager" class="shop-pager"></div>
+      <div id="shop-grid" class="shop-grid">
+        <!-- JS动态生成 -->
+      </div>
+      <div id="shop-pager-bottom" class="shop-pager"></div>
+      <button class="btn btn-back" onclick="closeShop()">🔙 返回星球选择</button>
+    </div>
+  </div>
+
+  <!-- PK竞技场界面 -->
+  <div id="pk-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="game-header">
+      <div class="player-info">
+        <span class="player-name" id="pk-name">👨‍🚀 宇航员</span>
+        <span class="player-hp">❤️ <span id="pk-hp">150</span>/150</span>
+        <span class="player-atk">⚔️ <span id="pk-atk">20</span></span>
+        <span class="player-def">🛡️ <span id="pk-def">8</span></span>
+        <span class="player-gold">⭐ <span id="pk-gold">0</span></span>
+        <span class="player-diamond">💎 <span id="pk-diamond">0</span></span>
+        <span class="player-rank" id="pk-rank">🌌 太空流浪者</span>
+      </div>
+    </div>
+    <h2 class="screen-title">⚔️ PK竞技场</h2>
+    <p class="pk-subtitle">挑战不同级别的对手，获得荣耀称号！</p>
+    <div id="pk-grid" class="pk-grid"></div>
+    <div class="planet-actions">
+      <button class="btn btn-back" onclick="closePKArena()">🔙 返回星球选择</button>
+    </div>
+  </div>
+
+  <!-- 试炼塔界面 -->
+  <div id="trial-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="game-header">
+      <div class="player-info">
+        <span class="player-name" id="trial-name">👨‍🚀 宇航员</span>
+        <span class="player-hp">❤️ <span id="trial-hp">150</span>/150</span>
+        <span class="player-atk">⚔️ <span id="trial-atk">20</span></span>
+        <span class="player-def">🛡️ <span id="trial-def">8</span></span>
+        <span class="player-gold">⭐ <span id="trial-gold">0</span></span>
+        <span class="player-diamond">💎 <span id="trial-diamond">0</span></span>
+        <span class="player-rank" id="trial-rank">🌌 太空流浪者</span>
+      </div>
+    </div>
+    <h2 class="screen-title">🏯 试炼塔</h2>
+    <p class="trial-subtitle">挑战不同难度的试炼，证明你的实力！</p>
+    <div id="trial-grid" class="trial-grid"></div>
+    <div class="planet-actions">
+      <button class="btn btn-back" onclick="closeTrialTower()">🔙 返回星球选择</button>
+    </div>
+  </div>
+
+  <!-- 战斗界面 -->
+  <div id="battle-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="game-header">
+      <div class="player-info">
+        <span class="player-name" id="battle-name">👨‍🚀 宇航员</span>
+        <span class="player-hp">❤️ <span id="battle-hp">150</span>/150</span>
+        <span class="player-atk">⚔️ <span id="battle-atk">20</span></span>
+        <span class="player-def">🛡️ <span id="battle-def">8</span></span>
+        <span class="player-gold">⭐ <span id="battle-gold">0</span></span>
+        <span class="player-diamond">💎 <span id="battle-diamond">0</span></span>
+        <span class="player-rank" id="battle-rank">🌌 太空流浪者</span>
+        <span class="player-ult">💥 大招: <span id="battle-ult">就绪</span></span>
+      </div>
+    </div>
+
+    <!-- 战斗画布 -->
+    <canvas id="battle-canvas"></canvas>
+
+    <!-- 技能冷却指示器 -->
+    <div class="skill-bar">
+      <div class="skill-item" id="skill-attack">
+        <kbd>🖱️长按左键</kbd>
+        <span>连射</span>
+      </div>
+      <div class="skill-item" id="skill-pause">
+        <kbd>ESC</kbd>
+        <span>暂停</span>
+      </div>
+      <div class="skill-item" id="skill-home">
+        <kbd>Alt</kbd>
+        <span>返回星球选择页面</span>
+      </div>
+      <div class="skill-item" id="skill-cannon">
+        <kbd>Q</kbd>
+        <span>蓄能炮</span>
+        <div class="cooldown-overlay" id="cd-cannon"></div>
+      </div>
+      <div class="skill-item" id="skill-ult">
+        <kbd>P</kbd>
+        <span>大招</span>
+        <div class="cooldown-overlay" id="cd-ult"></div>
+      </div>
+      <div class="skill-item" id="skill-defend">
+        <kbd>W</kbd>
+        <span>防御</span>
+        <div class="cooldown-overlay" id="cd-defend"></div>
+      </div>
+    </div>
+
+    <!-- 战斗武器栏 -->
+    <div class="battle-weapon-bar" id="battle-weapon-bar">
+      <span class="bw-label">🔫 装备武器：</span>
+      <div class="bw-slots" id="bw-slots"></div>
+      <span class="bw-hint">数字键 1-9 快速切换</span>
+    </div>
+
+    <div class="battle-info" id="battle-info">
+      <span id="battle-planet">🌍 水星</span>
+      <span>🎯 第 <span id="battle-stage">1</span>/100 关</span>
+    </div>
+    <div class="battle-log" id="battle-log"></div>
+  </div>
+
+  <!-- 胜利界面 -->
+  <div id="win-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="win-content">
+      <h1 class="win-title">🏆 恭喜通关！</h1>
+      <div class="win-trophy">🏆</div>
+      <p class="win-text">你征服了太阳系七大行星！</p>
+      <p class="win-text">击败了最终Boss，成为了银河系最强宇航员！</p>
+      <p class="win-text" id="win-rank"></p>
+      <button class="btn btn-start" onclick="resetGame()">🔄 重新开始</button>
+    </div>
+  </div>
+
+  <!-- 失败界面 -->
+  <div id="lose-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="lose-content">
+      <h1 class="lose-title">💀 任务失败</h1>
+      <p class="lose-text">宇航员倒下了...</p>
+      <p class="lose-text" id="lose-detail"></p>
+      <button class="btn btn-start" onclick="resetGame()">🔄 重新开始</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
