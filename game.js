@@ -1476,6 +1476,8 @@ function startGame() {
   showScreen('planet-screen');
   renderPlanets();
   updateHeaderUI();
+  // 自动更新排行榜（新玩家也会被记录）
+  silentLeaderboardSubmit();
 }
 
 function backToStart() {
@@ -1511,6 +1513,7 @@ function buyCola() {
   updateShopCurrency();
   saveGame();
   updateHeaderUI();
+  silentLeaderboardSubmit();
   alert('🥤 购买成功！最大生命值 +5！');
 }
 
@@ -1527,6 +1530,7 @@ function buyHeart() {
   updateShopCurrency();
   saveGame();
   updateHeaderUI();
+  silentLeaderboardSubmit();
   alert('❤️ 购买成功！最大生命值 +11！');
 }
 
@@ -6397,6 +6401,8 @@ function onEnemyDefeated() {
   gameState._lastRankIcon = newRank.icon;
 
   updateHeaderUI();
+  // 自动更新排行榜
+  silentLeaderboardSubmit();
 
   // ===== PK竞技场模式 =====
   if (gameState._inPK) {
@@ -6552,6 +6558,8 @@ function onEnemyDefeated() {
 
     gameState.player.hp = gameState.player.maxHp;
     addBattleLog(`🌟 ${currentPlanet.name} 全部通关！生命值已完全恢复！`, 'system');
+    // 自动更新排行榜（行星通关）
+    silentLeaderboardSubmit();
 
     if (gameState.currentPlanetIndex >= 7) {
       setTimeout(() => {
@@ -6765,6 +6773,8 @@ onEnemyDefeated = function() {
     gameState._lastRankId = finalRank.id;
     gameState._lastRankName = finalRank.name;
     gameState._lastRankIcon = finalRank.icon;
+    // 自动更新排行榜（最终Boss击杀）
+    silentLeaderboardSubmit();
 
     gameState._finalBossBattle = false;
     gameState.inBattle = false;
@@ -6960,12 +6970,52 @@ function openLeaderboard(fromId) {
   autoSubmitIfHasStats();
 }
 
-// 如果玩家有游戏数据，则自动提交
+// 如果玩家有游戏数据，则自动提交（新玩家也会被记录）
 function autoSubmitIfHasStats() {
   const p = gameState.player;
-  if (p && (p.totalKills > 0 || gameState.completedPlanets.length > 0)) {
+  if (p) {
     submitToLeaderboard();
   }
+}
+
+// 静默自动保存到排行榜（不显示按钮反馈，后台静默更新）
+function silentLeaderboardSubmit() {
+  const p = gameState.player;
+  if (!p) return;
+  const rank = getCurrentRank();
+
+  let playerName = document.getElementById('player-name-input')?.value || '';
+  playerName = playerName.trim();
+  if (!playerName) playerName = '宇航员';
+  if (playerName.length > 30) playerName = playerName.substring(0, 30);
+
+  const entry = {
+    name: playerName,
+    totalKills: p.totalKills,
+    rankIcon: rank.icon,
+    rankName: rank.name,
+    rankLevel: rank.id,
+    completedPlanets: gameState.completedPlanets.length,
+    gold: p.gold,
+    diamond: p.diamond,
+    date: new Date().toISOString().slice(0, 10)
+  };
+
+  const leaderboard = loadLeaderboard();
+
+  const existingIndex = leaderboard.findIndex(item => item.name === playerName);
+  if (existingIndex !== -1) {
+    leaderboard[existingIndex] = entry;
+  } else {
+    leaderboard.push(entry);
+  }
+
+  leaderboard.sort((a, b) => b.totalKills - a.totalKills);
+  if (leaderboard.length > LB_MAX) {
+    leaderboard.length = LB_MAX;
+  }
+
+  saveLeaderboard(leaderboard);
 }
 
 function closeLeaderboard() {
@@ -7432,16 +7482,16 @@ const OLD_NAMES_KEY = 'planetBattle_oldNames';
 const LAST_NAME_KEY = 'planetBattle_lastName';
 
 loadGame();
-// 一次性清理：删除排行榜第1名和第3名
+// 一次性清理：删除排行榜第1名、第2名和第3名
 (function cleanupLeaderboardOnce() {
-  const FLAG_KEY = 'planetBattle_lb_cleanup_done';
+  const FLAG_KEY = 'planetBattle_lb_cleanup_done_v2';
   if (localStorage.getItem(FLAG_KEY)) return;
   let lb = loadLeaderboard();
   if (lb.length >= 3) {
     // 按击杀数降序排列（和排行榜存储顺序一致）
     lb.sort((a, b) => b.totalKills - a.totalKills);
-    // 过滤掉第1名(index 0)和第3名(index 2)
-    lb = lb.filter((_, i) => i !== 0 && i !== 2);
+    // 过滤掉第1名(index 0)、第2名(index 1)和第3名(index 2)
+    lb = lb.filter((_, i) => i !== 0 && i !== 1 && i !== 2);
     saveLeaderboard(lb);
   }
   localStorage.setItem(FLAG_KEY, '1');
