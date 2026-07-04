@@ -6907,7 +6907,7 @@ function loadGame() {
 // ==================== 排行榜系统 ====================
 
 const LB_KEY = 'planetBattle_leaderboard';
-const LB_MAX = 20; // 最多保存20条
+const LB_MAX = 10; // 最多保存10条
 
 let _lbReturnScreen = 'start-screen'; // 从哪个页面打开的排行榜
 let _lbActiveTab = 'composite'; // 当前激活的排行榜标签
