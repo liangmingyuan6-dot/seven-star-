@@ -144,14 +144,40 @@
               <th class="fr-planets">🪐 通关行星</th>
               <th class="fr-gold">💰 金币</th>
               <th class="fr-diamond">💎 钻石</th>
+              <th class="fr-action">操作</th>
             </tr>
           </thead>
           <tbody id="friends-tbody">
-            <tr><td colspan="6" class="fr-empty">🔍 在上方搜索栏输入名字关键字即可搜索</td></tr>
+            <tr><td colspan="7" class="fr-empty">🔍 在上方搜索栏输入名字关键字即可搜索</td></tr>
           </tbody>
         </table>
       </div>
+      <div class="my-friends-section" id="my-friends-section">
+        <h3 class="my-friends-title">🤝 我的好友</h3>
+        <div class="my-friends-list" id="my-friends-list">
+          <span class="my-friends-empty">还没有添加好友，搜索上方玩家并点击「+好友」吧</span>
+        </div>
+      </div>
       <button class="btn btn-back" onclick="closeFriendsScreen()">🔙 返回</button>
+    </div>
+  </div>
+
+  <!-- 聊天界面 -->
+  <div id="chat-screen" class="screen">
+    <div class="stars-bg"></div>
+    <div class="chat-content">
+      <div class="chat-header">
+        <button class="chat-back-btn" onclick="closeChatScreen()">← 返回</button>
+        <span class="chat-friend-name" id="chat-friend-name">好友</span>
+        <span class="chat-friend-status">🟢 在线</span>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-empty-msg">💬 开始和好友聊天吧！</div>
+      </div>
+      <div class="chat-input-bar">
+        <input type="text" id="chat-input" class="chat-input" placeholder="输入消息…" maxlength="200" onkeydown="handleChatKeyDown(event)">
+        <button class="chat-send-btn" onclick="sendChatMessage()">发送</button>
+      </div>
     </div>
   </div>
 

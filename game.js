@@ -7440,6 +7440,7 @@ function openFriendsScreen() {
     input.focus();
   }
   searchFriends(); // 初始显示全部排行榜成员
+  renderMyFriends();
 }
 
 function closeFriendsScreen() {
@@ -7453,9 +7454,10 @@ function searchFriends() {
 
   const keyword = input.value.trim();
   const leaderboard = loadLeaderboard();
+  const friendsList = loadFriends();
 
   if (leaderboard.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="fr-empty">📭 排行榜暂无数据</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="fr-empty">📭 排行榜暂无数据</td></tr>';
     return;
   }
 
@@ -7472,19 +7474,26 @@ function searchFriends() {
   }
 
   if (results.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="fr-empty">🔍 未找到名字包含「' + escHtmlForFriends(keyword) + '」的玩家</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="fr-empty">🔍 未找到名字包含「' + escHtmlForFriends(keyword) + '」的玩家</td></tr>';
     return;
   }
 
   let html = '';
   for (const item of results) {
+    const name = item.name || '未知';
+    const alreadyFriend = friendsList.find(f => f.name === name);
+    const actionBtn = alreadyFriend
+      ? '<span class="fr-already">✅ 已添加</span>'
+      : '<button class="btn-fr-add" onclick="addFriend(\'' + escHtmlForFriends(name) + '\')">+好友</button>';
+
     html += '<tr>';
-    html += '<td class="fr-name">' + escHtmlForFriends(item.name || '未知') + '</td>';
+    html += '<td class="fr-name">' + escHtmlForFriends(name) + '</td>';
     html += '<td class="fr-kills">' + (item.totalKills || 0) + '</td>';
     html += '<td class="fr-rank">' + (item.rankName || '-') + '</td>';
     html += '<td class="fr-planets">' + (item.completedPlanets || 0) + '</td>';
     html += '<td class="fr-gold">' + (item.gold || 0) + '</td>';
     html += '<td class="fr-diamond">' + (item.diamond || 0) + '</td>';
+    html += '<td class="fr-action">' + actionBtn + '</td>';
     html += '</tr>';
   }
   tbody.innerHTML = html;
@@ -7495,6 +7504,204 @@ function escHtmlForFriends(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+// ==================== 好友添加与管理 ====================
+
+const FRIENDS_KEY = 'planetBattle_friendsList';
+const CHAT_KEY = 'planetBattle_chatMsgs';
+
+function loadFriends() {
+  try {
+    const raw = localStorage.getItem(FRIENDS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function saveFriends(list) {
+  try {
+    localStorage.setItem(FRIENDS_KEY, JSON.stringify(list));
+  } catch (e) {}
+}
+
+function loadChatMsgs() {
+  try {
+    const raw = localStorage.getItem(CHAT_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function saveChatMsgs(data) {
+  try {
+    localStorage.setItem(CHAT_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function isFriend(name) {
+  return loadFriends().some(f => f.name === name);
+}
+
+function addFriend(name) {
+  if (!name || name === '未知') return;
+  if (isFriend(name)) {
+    alert('⚠️ 「' + name + '」已经是你的好友了！');
+    return;
+  }
+  const friends = loadFriends();
+  friends.push({ name: name, dateAdded: new Date().toISOString().slice(0, 10) });
+  saveFriends(friends);
+  // 刷新搜索列表和我的好友
+  searchFriends();
+  renderMyFriends();
+  alert('✅ 已添加「' + name + '」为好友！');
+}
+
+function removeFriend(name) {
+  if (!confirm('确定要删除好友「' + name + '」吗？')) return;
+  let friends = loadFriends();
+  friends = friends.filter(f => f.name !== name);
+  saveFriends(friends);
+  searchFriends();
+  renderMyFriends();
+}
+
+function renderMyFriends() {
+  const container = document.getElementById('my-friends-list');
+  if (!container) return;
+  const friends = loadFriends();
+  if (friends.length === 0) {
+    container.innerHTML = '<span class="my-friends-empty">还没有添加好友，搜索上方玩家并点击「+好友」吧</span>';
+    return;
+  }
+  const leaderboard = loadLeaderboard();
+  let html = '';
+  for (const f of friends) {
+    const lbEntry = leaderboard.find(item => item.name === f.name);
+    const rankInfo = lbEntry ? (lbEntry.rankName || '-') : '-';
+    html += '<div class="my-friend-item">';
+    html += '<div class="my-friend-info">';
+    html += '<span class="my-friend-name">' + escHtmlForFriends(f.name) + '</span>';
+    html += '<span class="my-friend-rank">🏅 ' + rankInfo + '</span>';
+    html += '</div>';
+    html += '<div class="my-friend-actions">';
+    html += '<button class="btn-fr-chat" onclick="openChatScreen(\'' + escHtmlForFriends(f.name) + '\')">💬 聊天</button>';
+    html += '<button class="btn-fr-del" onclick="removeFriend(\'' + escHtmlForFriends(f.name) + '\')">✕</button>';
+    html += '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+// ==================== 聊天系统 ====================
+
+let _chatFriendName = '';
+
+function openChatScreen(friendName) {
+  _chatFriendName = friendName;
+  document.getElementById('chat-friend-name').textContent = friendName;
+  showScreen('chat-screen');
+  renderChatMessages();
+  const input = document.getElementById('chat-input');
+  if (input) setTimeout(() => input.focus(), 300);
+}
+
+function closeChatScreen() {
+  showScreen('friends-screen');
+  renderMyFriends();
+}
+
+function handleChatKeyDown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendChatMessage();
+  }
+}
+
+function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  if (!_chatFriendName) return;
+
+  const allMsgs = loadChatMsgs();
+  if (!allMsgs[_chatFriendName]) allMsgs[_chatFriendName] = [];
+
+  const msg = {
+    text: text,
+    from: 'me',
+    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  };
+  allMsgs[_chatFriendName].push(msg);
+  saveChatMsgs(allMsgs);
+  input.value = '';
+
+  // 模拟好友自动回复（本地模拟，让你看得见对方"回复"）
+  setTimeout(() => {
+    const autoReplies = [
+      '你好呀！👋', '今天天气不错~', '我刚刚在打Boss！', '哈哈，好的！',
+      '一起加油！💪', '收到啦！', '不错哦！', '嗯嗯，知道了~',
+      '厉害厉害！🎉', '有空一起玩！', '你段位多少了？', '我也想去打！'
+    ];
+    const reply = autoReplies[Math.floor(Math.random() * autoReplies.length)];
+    const updated = loadChatMsgs();
+    if (!updated[_chatFriendName]) updated[_chatFriendName] = [];
+    updated[_chatFriendName].push({
+      text: reply,
+      from: 'friend',
+      time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    });
+    saveChatMsgs(updated);
+    renderChatMessages();
+  }, 800 + Math.random() * 1500);
+
+  renderChatMessages();
+  input.focus();
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+  const allMsgs = loadChatMsgs();
+  const msgs = allMsgs[_chatFriendName] || [];
+
+  if (msgs.length === 0) {
+    container.innerHTML = '<div class="chat-empty-msg">💬 开始和好友聊天吧！</div>';
+    return;
+  }
+
+  let html = '';
+  for (const m of msgs) {
+    const isMe = m.from === 'me';
+    html += '<div class="chat-msg ' + (isMe ? 'chat-msg-me' : 'chat-msg-friend') + '">';
+    html += '<div class="chat-msg-text">' + escHtmlForFriends(m.text) + '</div>';
+    html += '<div class="chat-msg-time">' + (m.time || '') + '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+  // 滚动到底部
+  container.scrollTop = container.scrollHeight;
+}
+
+// 跨标签页聊天同步
+(function initChatSync() {
+  window.addEventListener('storage', function(e) {
+    if (e.key === CHAT_KEY) {
+      renderChatMessages();
+      renderMyFriends();
+      // 如果当前在好友搜索界面，刷新搜索结果
+      const fs = document.getElementById('friends-screen');
+      if (fs && fs.classList.contains('active')) {
+        searchFriends();
+      }
+    } else if (e.key === FRIENDS_KEY) {
+      renderMyFriends();
+      const fs2 = document.getElementById('friends-screen');
+      if (fs2 && fs2.classList.contains('active')) {
+        searchFriends();
+      }
+    }
+  });
+})();
 
 // ==================== 好友按钮长按：删除名字中的「作者」 ====================
 
