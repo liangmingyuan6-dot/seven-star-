@@ -7115,20 +7115,6 @@ function silentLeaderboardSubmit() {
   if (!playerName) playerName = '宇航员';
   if (playerName.length > 30) playerName = playerName.substring(0, 30);
 
-  // 每台电脑只保留1个名字在排行榜上：名字变更时自动移除旧名字
-  const lastNameS = loadLastName();
-  if (lastNameS && lastNameS !== playerName && lastNameS !== '宇航员') {
-    removeNameFromLeaderboard(lastNameS);
-    let oldNamesS = loadOldNames();
-    oldNamesS = oldNamesS.filter(item => item.name !== playerName);
-    if (!oldNamesS.find(item => item.name === lastNameS)) {
-      oldNamesS.push({ name: lastNameS, remaining: 3 });
-    }
-    saveOldNames(oldNamesS);
-    saveLastName(playerName);
-    renderOldNames();
-  }
-
   const entry = {
     name: playerName,
     totalKills: p.totalKills,
@@ -7195,20 +7181,6 @@ function submitToLeaderboard() {
   playerName = playerName.trim();
   if (!playerName) playerName = '宇航员';
   if (playerName.length > 30) playerName = playerName.substring(0, 30);
-
-  // 每台电脑只保留1个名字在排行榜上：名字变更时自动移除旧名字
-  const lastNameS = loadLastName();
-  if (lastNameS && lastNameS !== playerName && lastNameS !== '宇航员') {
-    removeNameFromLeaderboard(lastNameS);
-    let oldNamesS = loadOldNames();
-    oldNamesS = oldNamesS.filter(item => item.name !== playerName);
-    if (!oldNamesS.find(item => item.name === lastNameS)) {
-      oldNamesS.push({ name: lastNameS, remaining: 3 });
-    }
-    saveOldNames(oldNamesS);
-    saveLastName(playerName);
-    renderOldNames();
-  }
 
   const entry = {
     name: playerName,
@@ -7411,20 +7383,6 @@ function autoSubmitLeaderboard() {
   playerName = playerName.trim();
   if (!playerName) playerName = '宇航员';
   if (playerName.length > 30) playerName = playerName.substring(0, 30);
-
-  // 每台电脑只保留1个名字在排行榜上：名字变更时自动移除旧名字
-  const lastNameS = loadLastName();
-  if (lastNameS && lastNameS !== playerName && lastNameS !== '宇航员') {
-    removeNameFromLeaderboard(lastNameS);
-    let oldNamesS = loadOldNames();
-    oldNamesS = oldNamesS.filter(item => item.name !== playerName);
-    if (!oldNamesS.find(item => item.name === lastNameS)) {
-      oldNamesS.push({ name: lastNameS, remaining: 3 });
-    }
-    saveOldNames(oldNamesS);
-    saveLastName(playerName);
-    renderOldNames();
-  }
 
   const entry = {
     name: playerName,
@@ -7934,9 +7892,6 @@ function trackOldName() {
       oldNames.push({ name: lastName, remaining: 3 });
     }
     saveOldNames(oldNames);
-
-    // 关键：从排行榜中移除旧名字（每个用户只能有一个名字在排行榜上）
-    removeNameFromLeaderboard(lastName);
   }
 
   // 如果新名字在旧名字列表中，移除它（因为已经重新使用了）
