@@ -7027,6 +7027,20 @@ function silentLeaderboardSubmit() {
   if (!playerName) playerName = '宇航员';
   if (playerName.length > 30) playerName = playerName.substring(0, 30);
 
+  // 每台电脑只保留1个名字在排行榜上：名字变更时自动移除旧名字
+  const lastNameS = loadLastName();
+  if (lastNameS && lastNameS !== playerName && lastNameS !== '宇航员') {
+    removeNameFromLeaderboard(lastNameS);
+    let oldNamesS = loadOldNames();
+    oldNamesS = oldNamesS.filter(item => item.name !== playerName);
+    if (!oldNamesS.find(item => item.name === lastNameS)) {
+      oldNamesS.push({ name: lastNameS, remaining: 3 });
+    }
+    saveOldNames(oldNamesS);
+    saveLastName(playerName);
+    renderOldNames();
+  }
+
   const entry = {
     name: playerName,
     totalKills: p.totalKills,
@@ -7115,6 +7129,20 @@ function submitToLeaderboard() {
   playerName = playerName.trim();
   if (!playerName) playerName = '宇航员';
   if (playerName.length > 30) playerName = playerName.substring(0, 30);
+
+  // 每台电脑只保留1个名字在排行榜上：名字变更时自动移除旧名字
+  const lastNameS = loadLastName();
+  if (lastNameS && lastNameS !== playerName && lastNameS !== '宇航员') {
+    removeNameFromLeaderboard(lastNameS);
+    let oldNamesS = loadOldNames();
+    oldNamesS = oldNamesS.filter(item => item.name !== playerName);
+    if (!oldNamesS.find(item => item.name === lastNameS)) {
+      oldNamesS.push({ name: lastNameS, remaining: 3 });
+    }
+    saveOldNames(oldNamesS);
+    saveLastName(playerName);
+    renderOldNames();
+  }
 
   const entry = {
     name: playerName,
@@ -7342,6 +7370,20 @@ function autoSubmitLeaderboard() {
   if (!playerName) playerName = '宇航员';
   if (playerName.length > 30) playerName = playerName.substring(0, 30);
 
+  // 每台电脑只保留1个名字在排行榜上：名字变更时自动移除旧名字
+  const lastNameS = loadLastName();
+  if (lastNameS && lastNameS !== playerName && lastNameS !== '宇航员') {
+    removeNameFromLeaderboard(lastNameS);
+    let oldNamesS = loadOldNames();
+    oldNamesS = oldNamesS.filter(item => item.name !== playerName);
+    if (!oldNamesS.find(item => item.name === lastNameS)) {
+      oldNamesS.push({ name: lastNameS, remaining: 3 });
+    }
+    saveOldNames(oldNamesS);
+    saveLastName(playerName);
+    renderOldNames();
+  }
+
   const entry = {
     name: playerName,
     totalKills: p.totalKills,
@@ -7355,7 +7397,14 @@ function autoSubmitLeaderboard() {
   };
 
   const leaderboard = loadLeaderboard();
-  leaderboard.push(entry);
+
+  // 查找是否已有相同名字的条目，有则替换，无则新增
+  const existingIndex = leaderboard.findIndex(item => item.name === playerName);
+  if (existingIndex !== -1) {
+    leaderboard[existingIndex] = entry;
+  } else {
+    leaderboard.push(entry);
+  }
   leaderboard.sort((a, b) => {
     if (b.totalKills !== a.totalKills) return b.totalKills - a.totalKills;
     return b.gold - a.gold;
