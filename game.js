@@ -6960,6 +6960,94 @@ function removeNameFromLeaderboard(name) {
   }
 }
 
+/**
+ * 统一的排行榜准入逻辑：
+ * 1. 计算用户成绩，与当前排行榜前十名比较
+ * 2. 低于前十名则不列入
+ * 3. 同一用户只保留最高成绩
+ * 4. 按成绩从高到低排列，最多10条
+ * @param {Object} entry - { name, totalKills, ... }
+ * @returns {{ added: boolean, reason: string, rank: number|null }}
+ */
+function tryAddToLeaderboard(entry) {
+  if (!entry || !entry.name) return { added: false, reason: '数据无效', rank: null };
+  const leaderboard = loadLeaderboard();
+
+  // 获取排名分数：优先 totalKills，其次 gold
+  const entryScore = entry.totalKills || 0;
+  const entryGold = entry.gold || 0;
+
+  // 检查是否已有同名用户
+  const existingIndex = leaderboard.findIndex(item => item.name === entry.name);
+  if (existingIndex !== -1) {
+    const existingEntry = leaderboard[existingIndex];
+    const existingScore = existingEntry.totalKills || 0;
+    const existingGold = existingEntry.gold || 0;
+    // 同一用户只取最高成绩
+    if (entryScore < existingScore || (entryScore === existingScore && entryGold <= existingGold)) {
+      return { added: false, reason: '当前成绩「' + entryScore + '击杀」未超过旧纪录「' + existingScore + '击杀」，保持旧纪录', rank: null };
+    }
+    // 新成绩更高，替换
+    leaderboard[existingIndex] = entry;
+    leaderboard.sort((a, b) => {
+      if (b.totalKills !== a.totalKills) return b.totalKills - a.totalKills;
+      return b.gold - a.gold;
+    });
+    if (leaderboard.length > LB_MAX) leaderboard.length = LB_MAX;
+    saveLeaderboard(leaderboard);
+    const newRank = leaderboard.findIndex(item => item.name === entry.name) + 1;
+    syncLeaderboardUpdate();
+    return { added: true, reason: '刷新个人最高纪录！当前排名：第' + newRank + '名', rank: newRank };
+  }
+
+  // 新用户：判断是否达到前十名门槛
+  if (leaderboard.length < LB_MAX) {
+    // 排行榜未满10人，直接加入
+    leaderboard.push(entry);
+    leaderboard.sort((a, b) => {
+      if (b.totalKills !== a.totalKills) return b.totalKills - a.totalKills;
+      return b.gold - a.gold;
+    });
+    saveLeaderboard(leaderboard);
+    const newRank = leaderboard.findIndex(item => item.name === entry.name) + 1;
+    syncLeaderboardUpdate();
+    return { added: true, reason: '🎉 恭喜上榜！当前排名：第' + newRank + '名', rank: newRank };
+  }
+
+  // 排行榜已满10人，比较第十名
+  const tenthEntry = leaderboard[leaderboard.length - 1];
+  const tenthScore = tenthEntry.totalKills || 0;
+  const tenthGold = tenthEntry.gold || 0;
+
+  if (entryScore > tenthScore || (entryScore === tenthScore && entryGold > tenthGold)) {
+    // 高于第十名，挤掉最后一名
+    leaderboard.push(entry);
+    leaderboard.sort((a, b) => {
+      if (b.totalKills !== a.totalKills) return b.totalKills - a.totalKills;
+      return b.gold - a.gold;
+    });
+    if (leaderboard.length > LB_MAX) leaderboard.length = LB_MAX;
+    saveLeaderboard(leaderboard);
+    const newRank = leaderboard.findIndex(item => item.name === entry.name) + 1;
+    syncLeaderboardUpdate();
+    return { added: true, reason: '🎉 恭喜上榜！挤掉第10名「' + tenthEntry.name + '」，当前排名：第' + newRank + '名', rank: newRank };
+  }
+
+  // 低于第十名
+  return { added: false, reason: '成绩「' + entryScore + '击杀」未进入前十名（第10名为「' + tenthEntry.name + '」' + tenthScore + '击杀），不列入排行榜', rank: null };
+}
+
+/**
+ * 触发排行榜跨标签页同步
+ */
+function syncLeaderboardUpdate() {
+  updateStartPlayerCount();
+  _lbLastUpdateTime = Date.now();
+  try {
+    localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
+  } catch (e) {}
+}
+
 function switchLeaderboardTab(tabId) {
   _lbActiveTab = tabId;
   // 更新标签页样式
@@ -7053,30 +7141,8 @@ function silentLeaderboardSubmit() {
     date: new Date().toISOString().slice(0, 10)
   };
 
-  const leaderboard = loadLeaderboard();
-
-  const existingIndex = leaderboard.findIndex(item => item.name === playerName);
-  if (existingIndex !== -1) {
-    leaderboard[existingIndex] = entry;
-  } else {
-    leaderboard.push(entry);
-  }
-
-  leaderboard.sort((a, b) => b.totalKills - a.totalKills);
-  if (leaderboard.length > LB_MAX) {
-    leaderboard.length = LB_MAX;
-  }
-
-  saveLeaderboard(leaderboard);
-
-  // 更新开始界面的玩家数量
-  updateStartPlayerCount();
-
-  // 触发跨标签页同步事件
-  _lbLastUpdateTime = Date.now();
-  try {
-    localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
-  } catch (e) {}
+  // 统一排行榜准入检查：低于前十名不列入，同用户只取最高成绩
+  tryAddToLeaderboard(entry);
 }
 
 // 启动排行榜自动刷新（排行榜界面打开时调用）
@@ -7156,47 +7222,23 @@ function submitToLeaderboard() {
     date: new Date().toISOString().slice(0, 10)
   };
 
-  const leaderboard = loadLeaderboard();
-
-  // 查找是否已有相同名字的条目，有则替换，无则新增
-  const existingIndex = leaderboard.findIndex(item => item.name === playerName);
-  if (existingIndex !== -1) {
-    // 同名已存在，替换更新
-    leaderboard[existingIndex] = entry;
-  } else {
-    leaderboard.push(entry);
-  }
-
-  // 默认按 totalKills 降序存储
-  leaderboard.sort((a, b) => b.totalKills - a.totalKills);
-
-  // 限制数量
-  if (leaderboard.length > LB_MAX) {
-    leaderboard.length = LB_MAX;
-  }
-
-  saveLeaderboard(leaderboard);
+  // 统一排行榜准入检查：低于前十名不列入，同用户只取最高成绩
+  const result = tryAddToLeaderboard(entry);
   renderLeaderboard();
-
-  // 更新玩家数量并触发跨标签页同步
-  updateStartPlayerCount();
-  _lbLastUpdateTime = Date.now();
-  try {
-    localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
-  } catch (e) {}
 
   // 轻提示
   const btn = document.querySelector('#leaderboard-screen .btn-start');
   if (btn) {
     const orig = btn.textContent;
-    btn.textContent = '✅ 提交成功！';
+    const msg = result.added ? '✅ ' + result.reason : '⚠️ ' + result.reason;
+    btn.textContent = msg.length > 30 ? (result.added ? '✅ ' : '⚠️ ') + '查看详情' : msg;
     btn.disabled = true;
     btn.style.opacity = '0.6';
     setTimeout(() => {
       btn.textContent = orig;
       btn.disabled = false;
       btn.style.opacity = '1';
-    }, 2000);
+    }, 3000);
   }
 }
 
@@ -7396,31 +7438,15 @@ function autoSubmitLeaderboard() {
     date: new Date().toISOString().slice(0, 10)
   };
 
-  const leaderboard = loadLeaderboard();
+  // 统一排行榜准入检查：低于前十名不列入，同用户只取最高成绩
+  const result = tryAddToLeaderboard(entry);
 
-  // 查找是否已有相同名字的条目，有则替换，无则新增
-  const existingIndex = leaderboard.findIndex(item => item.name === playerName);
-  if (existingIndex !== -1) {
-    leaderboard[existingIndex] = entry;
+  // 提示结果并跳转排行榜
+  if (result.added) {
+    alert('✅ ' + result.reason);
   } else {
-    leaderboard.push(entry);
+    alert('⚠️ ' + result.reason);
   }
-  leaderboard.sort((a, b) => {
-    if (b.totalKills !== a.totalKills) return b.totalKills - a.totalKills;
-    return b.gold - a.gold;
-  });
-  if (leaderboard.length > LB_MAX) leaderboard.length = LB_MAX;
-  saveLeaderboard(leaderboard);
-
-  // 触发跨标签页同步
-  updateStartPlayerCount();
-  _lbLastUpdateTime = Date.now();
-  try {
-    localStorage.setItem(LB_UPDATE_KEY, String(_lbLastUpdateTime));
-  } catch (e) {}
-
-  // 短暂提示后跳转排行榜
-  alert('✅ 已成功提交到排行榜！');
   renderLeaderboard();
   openLeaderboardFromStart();
 }
